@@ -1,0 +1,1064 @@
+// ============================================================
+// CONFIG — FastAPI Backend Address
+// ============================================================
+const API_BASE = "http://localhost:8000";
+
+// State management
+let currentMode = "as_trained";
+let currentIcuState = "calm";
+let currentIcuRisk = 5;
+let sampleRecords = [];
+let activePatient = null;
+let currentFeatureColumns = [];
+
+// ============================================================
+// Particle Neural Network Background Animation
+// ============================================================
+const bgCanvas = document.getElementById("bg-canvas");
+if (bgCanvas) {
+  const bgCtx = bgCanvas.getContext("2d");
+  let particles = [];
+  
+  function resizeBg() {
+    bgCanvas.width = window.innerWidth;
+    bgCanvas.height = window.innerHeight;
+  }
+  window.addEventListener("resize", resizeBg);
+  resizeBg();
+
+  class Particle {
+    constructor() {
+      this.x = Math.random() * bgCanvas.width;
+      this.y = Math.random() * bgCanvas.height;
+      this.vx = (Math.random() - 0.5) * 0.35;
+      this.vy = (Math.random() - 0.5) * 0.35;
+      this.radius = Math.random() * 2 + 1;
+    }
+    update() {
+      this.x += this.vx;
+      this.y += this.vy;
+      if (this.x < 0 || this.x > bgCanvas.width) this.vx *= -1;
+      if (this.y < 0 || this.y > bgCanvas.height) this.vy *= -1;
+    }
+    draw() {
+      bgCtx.beginPath();
+      bgCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      bgCtx.fillStyle = "rgba(20, 184, 166, 0.15)";
+      bgCtx.fill();
+    }
+  }
+
+  for (let i = 0; i < 60; i++) {
+    particles.push(new Particle());
+  }
+
+  function animateBg() {
+    bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+    particles.forEach((p, idx) => {
+      p.update();
+      p.draw();
+      
+      for (let j = idx + 1; j < particles.length; j++) {
+        const p2 = particles[j];
+        const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+        if (dist < 120) {
+          bgCtx.beginPath();
+          bgCtx.moveTo(p.x, p.y);
+          bgCtx.lineTo(p2.x, p2.y);
+          bgCtx.strokeStyle = `rgba(20, 184, 166, ${0.1 * (1 - dist / 120)})`;
+          bgCtx.lineWidth = 0.5;
+          bgCtx.stroke();
+        }
+      }
+    });
+    requestAnimationFrame(animateBg);
+  }
+  animateBg();
+}
+
+// ============================================================
+// Simulators: ICU Bedside Monitor Waveform Engine
+// ============================================================
+class ScrollingEEG {
+  constructor(canvasId, seed = 0) {
+    this.canvas = document.getElementById(canvasId);
+    if (!this.canvas) return;
+    this.ctx = this.canvas.getContext("2d");
+    this.seed = seed;
+    this.points = [];
+    this.maxPoints = 300;
+    this.t = 0;
+    
+    this.resize();
+    window.addEventListener("resize", () => this.resize());
+    
+    for (let i = 0; i < this.maxPoints; i++) {
+      this.points.push(0);
+    }
+  }
+
+  resize() {
+    if (!this.canvas) return;
+    const rect = this.canvas.getBoundingClientRect();
+    this.canvas.width = rect.width * (window.devicePixelRatio || 1);
+    this.canvas.height = rect.height * (window.devicePixelRatio || 1);
+    this.ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+    this.w = rect.width;
+    this.h = rect.height;
+  }
+
+  addPoint(val) {
+    this.points.push(val);
+    if (this.points.length > this.maxPoints) {
+      this.points.shift();
+    }
+  }
+
+  draw(color) {
+    if (!this.canvas) return;
+    const { ctx, w, h } = this;
+    ctx.clearRect(0, 0, w, h);
+    
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.6;
+    
+    for (let i = 0; i < this.points.length; i++) {
+      const x = (i / (this.maxPoints - 1)) * w;
+      const y = h / 2 + this.points[i] * (h / 2) * 0.8;
+      if (i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
+    ctx.stroke();
+  }
+}
+
+const eegChannels = [
+  new ScrollingEEG("canvasCh1", 0.5),
+  new ScrollingEEG("canvasCh2", 1.5),
+  new ScrollingEEG("canvasCh3", 2.5),
+  new ScrollingEEG("canvasCh4", 3.5),
+];
+
+function generateEEGValue(t, seed) {
+  const risk = currentIcuRisk / 100.0;
+  
+  // Calm component decreases with risk
+  const calmVal = (Math.sin(t * 7 + seed * 8) * 0.15 + Math.sin(t * 16 + seed * 4) * 0.08) * Math.max(0, 1 - risk * 1.3);
+  
+  // Pre-ictal warning oscillations rise in the middle range
+  const warnFactor = risk <= 0.8 ? (risk * 1.2) : (1.0 - (risk - 0.8) * 5);
+  const warnVal = (Math.sin(t * 5.2 + seed * 0.6) * 0.28) * Math.max(0, warnFactor);
+  const occasionalSpike = (Math.sin(t * 1.6 + seed) > 0.86 ? Math.sin(t * 26) * 0.38 : 0) * Math.max(0, warnFactor);
+  
+  // Full Seizure lockstep high-voltage rhythm dominates above 75% risk
+  const seizureFactor = risk > 0.75 ? (risk - 0.75) * 4 : 0;
+  const seizureVal = (Math.sin(t * 2.8 + seed * 0.1) * 0.65 + Math.sin(t * 5.6 + seed * 0.1) * 0.25) * seizureFactor;
+  
+  // Noise baseline scales up with risk
+  const noiseVal = (Math.random() - 0.5) * (0.06 + 0.08 * risk);
+  
+  return Math.max(-1.0, Math.min(1.0, calmVal + warnVal + occasionalSpike + seizureVal + noiseVal));
+}
+
+// ============================================================
+// Simulators: 2D Spectrogram Generator
+// ============================================================
+const specCanvas = document.getElementById("spectrogramCanvas");
+if (specCanvas) {
+  const specCtx = specCanvas.getContext("2d");
+  const numBins = 48; 
+  const historyWidth = 320; 
+  let specHistory = [];
+
+  function resizeSpec() {
+    const rect = specCanvas.getBoundingClientRect();
+    specCanvas.width = rect.width;
+    specCanvas.height = rect.height;
+  }
+  window.addEventListener("resize", resizeSpec);
+  resizeSpec();
+
+  for (let i = 0; i < historyWidth; i++) {
+    specHistory.push(new Array(numBins).fill(0));
+  }
+
+  function addSpectrogramSlice() {
+    const slice = [];
+    const risk = currentIcuRisk / 100.0;
+    
+    for (let f = 0; f < numBins; f++) {
+      const calmIntensity = (Math.random() * 0.15 + (f > 20 ? Math.random() * 0.15 : 0)) * Math.max(0, 1 - risk * 1.3);
+      const warnFactor = risk <= 0.8 ? (risk * 1.2) : (1.0 - (risk - 0.8) * 5);
+      const warnIntensity = (Math.sin(eegTime * 1.5 + f * 0.1) * 0.25 + 0.25 + Math.random() * 0.2) * Math.max(0, warnFactor);
+      
+      const seizureFactor = risk > 0.75 ? (risk - 0.75) * 4 : 0;
+      const seizureIntensity = (Math.sin(eegTime * 4.2) > 0.3 ? 0.75 : 0.2 + Math.random() * 0.25) * seizureFactor;
+      
+      const intensity = calmIntensity + warnIntensity + seizureIntensity;
+      slice.push(Math.max(0, Math.min(1.0, intensity)));
+    }
+    specHistory.push(slice);
+    if (specHistory.length > historyWidth) specHistory.shift();
+  }
+
+  function drawSpectrogram() {
+    const w = specCanvas.width;
+    const h = specCanvas.height;
+    specCtx.clearRect(0, 0, w, h);
+    
+    const sliceW = w / historyWidth;
+    const binH = h / numBins;
+
+    for (let i = 0; i < historyWidth; i++) {
+      const slice = specHistory[i];
+      const x = i * sliceW;
+      for (let f = 0; f < numBins; f++) {
+        const y = h - (f + 1) * binH;
+        const val = slice[f];
+        
+        let r, g, b;
+        if (currentIcuRisk <= 30) {
+          r = Math.floor(13 * val);
+          g = Math.floor(184 * val);
+          b = Math.floor(166 * val);
+        } else if (currentIcuRisk > 30 && currentIcuRisk <= 80) {
+          r = Math.floor(245 * val);
+          g = Math.floor(158 * val);
+          b = Math.floor(11 * val);
+        } else {
+          r = Math.floor(244 * val);
+          g = Math.floor(63 * val);
+          b = Math.floor(94 * val);
+        }
+
+        specCtx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+        specCtx.fillRect(x, y, sliceW + 0.5, binH + 0.5);
+      }
+    }
+  }
+
+  setInterval(() => {
+    addSpectrogramSlice();
+    drawSpectrogram();
+  }, 50);
+}
+
+// Tick loop for drawing EEG waves
+let eegTime = 0;
+function tickEEG() {
+  eegTime += 0.08;
+  
+  let color = "#14B8A6"; 
+  if (currentIcuRisk > 30 && currentIcuRisk <= 80) color = "#F59E0B"; 
+  if (currentIcuRisk > 80) color = "#F43F5E"; 
+  
+  eegChannels.forEach((chan) => {
+    const val = generateEEGValue(eegTime, chan.seed);
+    chan.addPoint(val);
+    chan.draw(color);
+  });
+  
+  requestAnimationFrame(tickEEG);
+}
+
+setTimeout(tickEEG, 500);
+
+function setIcuRisk(value) {
+  let val = parseInt(value);
+  if (isNaN(val)) val = 0;
+  if (val < 0) val = 0;
+  if (val > 100) val = 100;
+  
+  currentIcuRisk = val;
+  
+  // Sync slider and input box
+  const inputEl = document.getElementById("riskInput");
+  const sliderEl = document.getElementById("riskSlider");
+  if (inputEl && inputEl.value != val) inputEl.value = val;
+  if (sliderEl && sliderEl.value != val) sliderEl.value = val;
+  
+  // Categorize state based on threshold
+  let state = "calm";
+  if (val > 30 && val <= 80) state = "warning";
+  if (val > 80) state = "seizure";
+  
+  currentIcuState = state;
+  
+  const riskVal = document.getElementById("icu-risk-val");
+  const statusText = document.getElementById("icu-status-text");
+  const riskBadge = document.getElementById("icu-risk-badge");
+  
+  riskVal.className = "icu-metric-value state-" + state;
+  riskVal.textContent = val + "%";
+  
+  if (state === "calm") {
+    statusText.textContent = "Patient Status: Stable";
+    riskBadge.style.background = "var(--teal-glow)";
+    riskBadge.style.color = "var(--teal-light)";
+    riskBadge.style.borderColor = "rgba(20, 184, 166, 0.3)";
+    riskBadge.textContent = "CALM";
+  } else if (state === "warning") {
+    statusText.textContent = "Patient Status: Pre-Ictal Pattern Detected";
+    riskBadge.style.background = "var(--amber-glow)";
+    riskBadge.style.color = "var(--amber-light)";
+    riskBadge.style.borderColor = "rgba(245, 158, 11, 0.3)";
+    riskBadge.textContent = "WARNING";
+  } else if (state === "seizure") {
+    statusText.textContent = "Patient Status: ACTIVE SEIZURE EMERGENCY";
+    riskBadge.style.background = "var(--coral-glow)";
+    riskBadge.style.color = "var(--coral-light)";
+    riskBadge.style.borderColor = "rgba(244, 63, 94, 0.3)";
+    riskBadge.textContent = "CRITICAL";
+  }
+  
+  updateWearableAlert(state);
+}
+
+// ============================================================
+// Interactive 3D Brain Synchronization Sphere Visualizer
+// ============================================================
+const syncWebCanvas = document.getElementById("syncWebCanvas");
+if (syncWebCanvas) {
+  const syncWebCtx = syncWebCanvas.getContext("2d");
+  
+  let yaw = 0.2;  // Rotation angles
+  let pitch = -0.3;
+  let isDragging = false;
+  let prevMouseX = 0;
+  let prevMouseY = 0;
+
+  function resizeSyncWeb() {
+    const rect = syncWebCanvas.getBoundingClientRect();
+    syncWebCanvas.width = rect.width;
+    syncWebCanvas.height = rect.height;
+  }
+  window.addEventListener("resize", resizeSyncWeb);
+  resizeSyncWeb();
+
+  // 3D Nodes mapped on a sphere silhouette
+  const nodes3D = [
+    { label: "FP1", x: -0.3, y: 0.8, z: 0.6 },
+    { label: "FP2", x: 0.3, y: 0.8, z: 0.6 },
+    { label: "C3",  x: -0.6, y: 0.2, z: 0.3 },
+    { label: "C4",  x: 0.6, y: 0.2, z: 0.3 },
+    { label: "T3",  x: -0.85, y: -0.1, z: -0.1 },
+    { label: "T4",  x: 0.85, y: -0.1, z: -0.1 },
+    { label: "O1",  x: -0.4, y: -0.8, z: -0.5 },
+    { label: "O2",  x: 0.4, y: -0.8, z: -0.5 },
+  ];
+
+  // Drag listeners
+  syncWebCanvas.addEventListener("mousedown", (e) => {
+    isDragging = true;
+    prevMouseX = e.clientX;
+    prevMouseY = e.clientY;
+  });
+
+  window.addEventListener("mouseup", () => isDragging = false);
+
+  window.addEventListener("mousemove", (e) => {
+    if (!isDragging) {
+      // Auto-rotation bias slightly shifts when mouse moves over canvas
+      const rect = syncWebCanvas.getBoundingClientRect();
+      if (e.clientX >= rect.left && e.clientX <= rect.right &&
+          e.clientY >= rect.top && e.clientY <= rect.bottom) {
+        yaw += (e.clientX - (rect.left + rect.width / 2)) * 0.0001;
+      }
+      return;
+    }
+    const dx = e.clientX - prevMouseX;
+    const dy = e.clientY - prevMouseY;
+    yaw += dx * 0.007;
+    pitch += dy * 0.007;
+    prevMouseX = e.clientX;
+    prevMouseY = e.clientY;
+  });
+
+  let syncTime = 0;
+  function drawSyncWeb() {
+    if (!isDragging) {
+      yaw += 0.004; // Gentle auto-rotate
+    }
+    syncTime += 0.035;
+    
+    const w = syncWebCanvas.width;
+    const h = syncWebCanvas.height;
+    syncWebCtx.clearRect(0, 0, w, h);
+    
+    const cx = w / 2;
+    const cy = h / 2;
+    const scale = Math.min(cx, cy) * 0.65;
+
+    // 3D coordinate transformation matrices
+    const cosY = Math.cos(yaw);
+    const sinY = Math.sin(yaw);
+    const cosP = Math.cos(pitch);
+    const sinP = Math.sin(pitch);
+
+    const projected = nodes3D.map((n) => {
+      // Rotate around Y axis (Yaw)
+      let x1 = n.x * cosY - n.z * sinY;
+      let z1 = n.x * sinY + n.z * cosY;
+      
+      // Rotate around X axis (Pitch)
+      let y2 = n.y * cosP - z1 * sinP;
+      let z2 = n.y * sinP + z1 * cosP;
+      
+      // Project to 2D
+      const px = cx + x1 * scale;
+      const py = cy - y2 * scale; // invert Y
+      return { label: n.label, x: px, y: py, z: z2 };
+    });
+
+    // Draw connecting lines sorted by depth (back-to-front rendering)
+    for (let i = 0; i < projected.length; i++) {
+      const n1 = projected[i];
+      for (let j = i + 1; j < projected.length; j++) {
+        const n2 = projected[j];
+        
+        let syncVal = 0;
+        let strokeColor = "rgba(255, 255, 255, 0.03)";
+        
+        if (currentIcuRisk <= 30) {
+          syncVal = 0.05 + Math.sin(syncTime + i * 2 + j) * 0.05;
+          strokeColor = `rgba(20, 184, 166, ${syncVal})`;
+        } else if (currentIcuRisk > 30 && currentIcuRisk <= 80) {
+          syncVal = 0.3 + Math.sin(syncTime * 2 + i + j) * 0.25;
+          strokeColor = `rgba(245, 158, 11, ${syncVal})`;
+        } else {
+          syncVal = 0.8 + Math.abs(Math.sin(syncTime * 4.5)) * 0.2;
+          strokeColor = `rgba(244, 63, 94, ${syncVal})`;
+        }
+        
+        // Depth modulation: dimmer lines if far away (negative z)
+        const avgZ = (n1.z + n2.z) / 2; // range [-1, 1] roughly
+        const depthAlpha = (avgZ + 1.2) / 2.2;
+        
+        syncWebCtx.beginPath();
+        syncWebCtx.moveTo(n1.x, n1.y);
+        syncWebCtx.lineTo(n2.x, n2.y);
+        syncWebCtx.strokeStyle = strokeColor;
+        syncWebCtx.globalAlpha = Math.max(0.1, depthAlpha);
+        syncWebCtx.lineWidth = syncVal * 3.5;
+        syncWebCtx.stroke();
+        syncWebCtx.globalAlpha = 1.0;
+      }
+    }
+
+    // Draw projected nodes
+    projected.forEach((n) => {
+      let nodeColor = "#64748B";
+      let glowColor = "rgba(0,0,0,0)";
+      if (currentIcuRisk <= 30) {
+        nodeColor = "#14B8A6";
+        glowColor = "var(--teal-glow)";
+      } else if (currentIcuRisk > 30 && currentIcuRisk <= 80) {
+        nodeColor = "#F59E0B";
+        glowColor = "var(--amber-glow)";
+      } else {
+        nodeColor = "#F43F5E";
+        glowColor = "var(--coral-glow)";
+      }
+
+      // Depth modulation for size & opacity
+      const depthScale = (n.z + 1.5) / 2.5; 
+      
+      syncWebCtx.beginPath();
+      syncWebCtx.arc(n.x, n.y, 14 * depthScale, 0, Math.PI * 2);
+      syncWebCtx.fillStyle = glowColor;
+      syncWebCtx.globalAlpha = Math.max(0.1, depthScale);
+      syncWebCtx.fill();
+
+      syncWebCtx.beginPath();
+      syncWebCtx.arc(n.x, n.y, 6 * depthScale, 0, Math.PI * 2);
+      syncWebCtx.fillStyle = nodeColor;
+      syncWebCtx.fill();
+      syncWebCtx.globalAlpha = 1.0;
+
+      // Draw label
+      syncWebCtx.font = `${Math.floor(9 * depthScale)}px 'Fira Code', monospace`;
+      syncWebCtx.fillStyle = `rgba(148, 163, 184, ${Math.max(0.2, depthScale)})`;
+      syncWebCtx.textAlign = "center";
+      syncWebCtx.textBaseline = "middle";
+      syncWebCtx.fillText(n.label, n.x, n.y - 14 * depthScale);
+    });
+
+    requestAnimationFrame(drawSyncWeb);
+  }
+  setTimeout(drawSyncWeb, 500);
+}
+
+// ============================================================
+// Simulators: Wearable early Warning Simulator
+// ============================================================
+function updateWearableAlert(state) {
+  const card = document.getElementById("phoneNotification");
+  const watchStatus = document.getElementById("watchSyncStatus");
+  if (!card || !watchStatus) return;
+  
+  card.className = "phone-alert-card alert-active";
+  
+  if (state === "calm") {
+    card.classList.remove("alert-warning", "alert-seizure");
+    card.querySelector(".phone-alert-title").textContent = "Normal Status";
+    card.querySelector(".phone-alert-body").textContent = "Neural synchronization parameters are within baseline limits. Risk index: 5%.";
+    watchStatus.textContent = "Active (Stable)";
+    watchStatus.style.color = "var(--teal-light)";
+  } else if (state === "warning") {
+    card.classList.add("alert-warning");
+    card.classList.remove("alert-seizure");
+    card.querySelector(".phone-alert-title").textContent = "⚠️ Early Warning Alert";
+    card.querySelector(".phone-alert-body").textContent = "Pre-ictal synchronization detected in Patient #30539. High risk of seizure within 10-15 minutes.";
+    watchStatus.textContent = "Warning (Sync Alert)";
+    watchStatus.style.color = "var(--amber-light)";
+  } else if (state === "seizure") {
+    card.classList.add("alert-seizure");
+    card.classList.remove("alert-warning");
+    card.querySelector(".phone-alert-title").textContent = "🚨 CRITICAL EMERGENCY";
+    card.querySelector(".phone-alert-body").textContent = "ACTIVE SEIZURE DETECTED. Immediate medical response required. Risk index: 96%.";
+    watchStatus.textContent = "EMERGENCY";
+    watchStatus.style.color = "var(--coral-light)";
+  }
+}
+
+// ============================================================
+// Interactive EEG Drawing Pad ("Neural Signal Canvas")
+// ============================================================
+const drawCanvas = document.getElementById("drawingPadCanvas");
+let isDrawingPad = false;
+let drawPoints = [];
+
+if (drawCanvas) {
+  const dCtx = drawCanvas.getContext("2d");
+  
+  function resizeDrawCanvas() {
+    const rect = drawCanvas.getBoundingClientRect();
+    drawCanvas.width = rect.width;
+    drawCanvas.height = rect.height;
+    clearDrawingPad();
+  }
+  window.addEventListener("resize", resizeDrawCanvas);
+  setTimeout(resizeDrawCanvas, 100);
+
+  function getMousePos(e) {
+    const rect = drawCanvas.getBoundingClientRect();
+    return {
+      x: (e.clientX || e.touches?.[0]?.clientX) - rect.left,
+      y: (e.clientY || e.touches?.[0]?.clientY) - rect.top
+    };
+  }
+
+  function startDrawing(e) {
+    isDrawingPad = true;
+    const pos = getMousePos(e);
+    drawPoints = [pos];
+    dCtx.beginPath();
+    dCtx.moveTo(pos.x, pos.y);
+    dCtx.strokeStyle = "var(--teal-light)";
+    dCtx.lineWidth = 2;
+    dCtx.shadowBlur = 4;
+    dCtx.shadowColor = "var(--teal-glow)";
+  }
+
+  function drawMove(e) {
+    if (!isDrawingPad) return;
+    e.preventDefault();
+    const pos = getMousePos(e);
+    drawPoints.push(pos);
+    
+    dCtx.lineTo(pos.x, pos.y);
+    dCtx.stroke();
+    
+    // Analyze signal frequency & amplitude characteristics dynamically
+    analyzeDrawnWave();
+  }
+
+  function stopDrawing() {
+    isDrawingPad = false;
+    dCtx.shadowBlur = 0;
+    
+    // Auto-predict based on drawn signal
+    triggerPredict();
+  }
+
+  drawCanvas.addEventListener("mousedown", startDrawing);
+  drawCanvas.addEventListener("mousemove", drawMove);
+  drawCanvas.addEventListener("mouseup", stopDrawing);
+  drawCanvas.addEventListener("mouseleave", stopDrawing);
+
+  drawCanvas.addEventListener("touchstart", startDrawing);
+  drawCanvas.addEventListener("touchmove", drawMove);
+  drawCanvas.addEventListener("touchend", stopDrawing);
+}
+
+function clearDrawingPad(e) {
+  if (e) e.stopPropagation();
+  const dCtx = drawCanvas.getContext("2d");
+  dCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+  drawPoints = [];
+  
+  // Draw centerline reference
+  dCtx.beginPath();
+  dCtx.moveTo(0, drawCanvas.height / 2);
+  dCtx.lineTo(drawCanvas.width, drawCanvas.height / 2);
+  dCtx.strokeStyle = "rgba(255,255,255,0.05)";
+  dCtx.setLineDash([5, 5]);
+  dCtx.stroke();
+  dCtx.setLineDash([]);
+}
+
+function analyzeDrawnWave() {
+  if (drawPoints.length < 5) return;
+  
+  const h = drawCanvas.height;
+  const mid = h / 2;
+  
+  // Calculate amplitude, variance, and zero crossings (proxy for frequency)
+  let maxAmp = 0;
+  let crossings = 0;
+  let prevDiff = 0;
+  
+  drawPoints.forEach((p, idx) => {
+    const diff = p.y - mid;
+    if (Math.abs(diff) > maxAmp) {
+      maxAmp = Math.abs(diff);
+    }
+    
+    // Zero crossing check
+    if (idx > 0) {
+      if ((diff >= 0 && prevDiff < 0) || (diff < 0 && prevDiff >= 0)) {
+        crossings++;
+      }
+    }
+    prevDiff = diff;
+  });
+
+  const normAmp = Math.min(1.0, maxAmp / mid); // Normalize to 0-1
+  const freqRatio = Math.min(1.0, crossings / (drawPoints.length * 0.15));
+
+  // Map drawn properties to vote_* sliders to change the live prediction
+  if (currentMode === "as_trained") {
+    // If drawing spikes/waves, map to Seizure/LPD/GPD votes
+    const seizureInput = document.querySelector('input[name="seizure_vote"]');
+    const otherInput = document.querySelector('input[name="other_vote"]');
+    const offsetInput = document.querySelector('input[name="eeg_label_offset_seconds"]');
+    
+    if (seizureInput && otherInput && offsetInput) {
+      if (normAmp > 0.6 && freqRatio > 0.4) {
+        seizureInput.value = (normAmp * 0.9).toFixed(2);
+        otherInput.value = (1 - normAmp * 0.9).toFixed(2);
+      } else {
+        seizureInput.value = (normAmp * 0.2).toFixed(2);
+        otherInput.value = (1 - normAmp * 0.2).toFixed(2);
+      }
+      
+      // Update slider display labels
+      updateSliderVal("seizure_vote", seizureInput.value);
+      updateSliderVal("other_vote", otherInput.value);
+      
+      // Set offset based on crossings
+      offsetInput.value = Math.floor(freqRatio * 1500);
+      updateSliderVal("eeg_label_offset_seconds", offsetInput.value);
+    }
+  } else {
+    // Leakage-corrected mode: map to standard EEG offsets and fold characteristics
+    const offsetInput = document.querySelector('input[name="eeg_label_offset_seconds"]');
+    const specOffsetInput = document.querySelector('input[name="spectrogram_label_offset_seconds"]');
+    
+    if (offsetInput && specOffsetInput) {
+      offsetInput.value = Math.floor(normAmp * 1800);
+      specOffsetInput.value = Math.floor(freqRatio * 1200);
+      
+      updateSliderVal("eeg_label_offset_seconds", offsetInput.value);
+      updateSliderVal("spectrogram_label_offset_seconds", specOffsetInput.value);
+    }
+  }
+}
+
+// ============================================================
+// Navigation: Tabs toggles
+// ============================================================
+function switchTab(tabName) {
+  document.querySelectorAll(".tab-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.textContent.toLowerCase().includes(tabName));
+  });
+  
+  document.querySelectorAll(".sim-tab-panel").forEach((panel) => {
+    panel.classList.toggle("active", panel.id === `panel-${tabName}`);
+  });
+  
+  if (tabName === "icu") {
+    eegChannels.forEach((chan) => chan.resize());
+    if (specCanvas) resizeSpec();
+    if (syncWebCanvas) resizeSyncWeb();
+  } else if (tabName === "portal") {
+    if (drawCanvas) resizeDrawCanvas();
+  }
+}
+
+// ============================================================
+// Pipeline State Toggle
+// ============================================================
+function showToast(message, type = "teal") {
+  const container = document.getElementById("toast-container");
+  if (!container) return;
+  const toast = document.createElement("div");
+  toast.style.background = "var(--surface-card)";
+  toast.style.border = `1px solid var(--border-active)`;
+  toast.style.borderLeft = `4px solid var(--${type}-light)`;
+  toast.style.color = "var(--text)";
+  toast.style.padding = "0.75rem 1.25rem";
+  toast.style.borderRadius = "8px";
+  toast.style.boxShadow = "0 10px 25px rgba(0,0,0,0.5)";
+  toast.style.fontSize = "0.85rem";
+  toast.style.fontWeight = "700";
+  toast.style.backdropFilter = "var(--glass-blur)";
+  toast.style.transition = "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)";
+  toast.style.transform = "translateX(120px)";
+  toast.style.opacity = "0";
+  toast.textContent = message;
+  
+  container.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.transform = "translateX(0)";
+    toast.style.opacity = "1";
+  }, 50);
+  
+  setTimeout(() => {
+    toast.style.transform = "translateX(120px)";
+    toast.style.opacity = "0";
+    setTimeout(() => toast.remove(), 400);
+  }, 3500);
+}
+
+function setPipelineMode(mode) {
+  currentMode = mode;
+  document.getElementById("btnAsTrained").classList.toggle("active", mode === "as_trained");
+  document.getElementById("btnCorrected").classList.toggle("active", mode === "leakage_corrected");
+  
+  loadModelInfo();
+  generateFeatureSliders();
+  
+  const label = mode === "as_trained" ? "As Trained Mode (98.8% Acc)" : "Leakage-Corrected Mode";
+  showToast(`Active Pipeline: ${label}`, mode === "as_trained" ? "teal" : "amber");
+  
+  const target = document.getElementById("simulators");
+  if (target) {
+    target.scrollIntoView({ behavior: "smooth" });
+  }
+}
+
+// ============================================================
+// Portal: Load Samples and Patient Cards
+// ============================================================
+async function loadSamples() {
+  const listEl = document.getElementById("patientList");
+  try {
+    const res = await fetch(`${API_BASE}/samples`);
+    if (!res.ok) throw new Error("Could not load samples");
+    sampleRecords = await res.json();
+    
+    listEl.innerHTML = "";
+    sampleRecords.forEach((patient, idx) => {
+      const card = document.createElement("div");
+      card.className = "patient-card" + (idx === 0 ? " active" : "");
+      card.innerHTML = `
+        <div>Patient #${patient.patient_id || idx}</div>
+        <div class="patient-meta">consensus: ${patient.expert_consensus}</div>
+      `;
+      card.addEventListener("click", () => {
+        listEl.querySelectorAll(".patient-card").forEach((c) => c.classList.remove("active"));
+        card.classList.add("active");
+        activePatient = patient;
+        fillFormWithPatient(patient);
+      });
+      listEl.appendChild(card);
+    });
+    
+    if (sampleRecords.length > 0) {
+      activePatient = sampleRecords[0];
+      fillFormWithPatient(activePatient);
+    }
+  } catch (err) {
+    listEl.innerHTML = `<div class="patient-meta" style="text-align:center; padding: 1rem;">Could not connect to backend</div>`;
+    console.error(err);
+  }
+}
+
+// ============================================================
+// Portal: Feature sliders generation
+// ============================================================
+const featureMeta = {
+  eeg_id: { min: 0, max: 4000000000, step: 100000, def: 2000000000 },
+  eeg_sub_id: { min: 0, max: 20, step: 1, def: 0 },
+  eeg_label_offset_seconds: { min: 0, max: 2000, step: 1, def: 0 },
+  spectrogram_id: { min: 0, max: 2000000000, step: 100000, def: 1000000000 },
+  spectrogram_sub_id: { min: 0, max: 30, step: 1, def: 0 },
+  spectrogram_label_offset_seconds: { min: 0, max: 2000, step: 1, def: 0 },
+  patient_id: { min: 0, max: 65000, step: 1, def: 30000 },
+  fold: { min: 0, max: 4, step: 1, def: 0 },
+  seizure_vote: { min: 0, max: 1, step: 0.01, def: 0 },
+  lpd_vote: { min: 0, max: 1, step: 0.01, def: 0 },
+  gpd_vote: { min: 0, max: 1, step: 0.01, def: 0 },
+  lrda_vote: { min: 0, max: 1, step: 0.01, def: 0 },
+  grda_vote: { min: 0, max: 1, step: 0.01, def: 0 },
+  other_vote: { min: 0, max: 1, step: 0.01, def: 0 },
+};
+
+function generateFeatureSliders() {
+  const form = document.getElementById("slidersForm");
+  form.innerHTML = "";
+  
+  let columns = [];
+  if (currentMode === "as_trained") {
+    columns = [
+      "eeg_id", "eeg_sub_id", "eeg_label_offset_seconds",
+      "spectrogram_id", "spectrogram_sub_id", "spectrogram_label_offset_seconds",
+      "patient_id", "seizure_vote", "lpd_vote", "gpd_vote",
+      "lrda_vote", "grda_vote", "other_vote", "fold"
+    ];
+  } else {
+    columns = [
+      "eeg_id", "eeg_sub_id", "eeg_label_offset_seconds",
+      "spectrogram_id", "spectrogram_sub_id", "spectrogram_label_offset_seconds",
+      "patient_id", "fold"
+    ];
+  }
+  
+  currentFeatureColumns = columns;
+  
+  columns.forEach((col) => {
+    const meta = featureMeta[col] || { min: 0, max: 100, step: 1, def: 0 };
+    const labelRow = document.createElement("div");
+    labelRow.className = "feature-slider-group";
+    labelRow.innerHTML = `
+      <div class="feature-slider-label">
+        <span class="feature-name">${col}</span>
+        <span class="feature-val" id="val-${col}">${meta.def}</span>
+      </div>
+      <input type="range" name="${col}" min="${meta.min}" max="${meta.max}" step="${meta.step}" value="${meta.def}" oninput="updateSliderVal('${col}', this.value)">
+    `;
+    form.appendChild(labelRow);
+  });
+  
+  if (activePatient) {
+    fillFormWithPatient(activePatient);
+  }
+}
+
+function updateSliderVal(col, val) {
+  const valEl = document.getElementById(`val-${col}`);
+  if (valEl) valEl.textContent = parseFloat(val).toFixed(col.includes("vote") ? 2 : 0);
+}
+
+function fillFormWithPatient(patient) {
+  currentFeatureColumns.forEach((col) => {
+    const val = patient[col] !== undefined ? patient[col] : (featureMeta[col]?.def || 0);
+    const input = document.querySelector(`input[name="${col}"]`);
+    if (input) {
+      input.value = val;
+      updateSliderVal(col, val);
+    }
+  });
+}
+
+function resetForm() {
+  if (activePatient) {
+    fillFormWithPatient(activePatient);
+  } else {
+    currentFeatureColumns.forEach((col) => {
+      const def = featureMeta[col]?.def || 0;
+      const input = document.querySelector(`input[name="${col}"]`);
+      if (input) {
+        input.value = def;
+        updateSliderVal(col, def);
+      }
+    });
+  }
+  if (drawCanvas) clearDrawingPad();
+}
+
+// ============================================================
+// Portal: Run Prediction & fetch Grad-CAM / Attribution Grads
+// ============================================================
+async function triggerPredict() {
+  const classValEl = document.getElementById("predictedClassVal");
+  classValEl.textContent = "Calculating...";
+  
+  const features = {};
+  currentFeatureColumns.forEach((col) => {
+    const input = document.querySelector(`input[name="${col}"]`);
+    if (input) {
+      features[col] = parseFloat(input.value);
+    }
+  });
+  
+  try {
+    const res = await fetch(`${API_BASE}/predict`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        mode: currentMode,
+        features: features
+      })
+    });
+    
+    if (!res.ok) throw new Error("Prediction calculation failed");
+    const data = await res.json();
+    
+    classValEl.textContent = data.predicted_class;
+    
+    const probContainer = document.getElementById("probBarContainer");
+    probContainer.innerHTML = "";
+    
+    Object.entries(data.probabilities).forEach(([cls, prob]) => {
+      const isTop = cls === data.predicted_class;
+      const row = document.createElement("div");
+      row.className = "prob-bar-row";
+      row.innerHTML = `
+        <span class="prob-bar-label">${cls}</span>
+        <div class="prob-bar-track">
+          <div class="prob-bar-fill${isTop ? ' top-match' : ''}" style="width: ${(prob * 100).toFixed(1)}%;"></div>
+        </div>
+        <span class="prob-bar-pct">${(prob * 100).toFixed(0)}%</span>
+      `;
+      probContainer.appendChild(row);
+    });
+    
+    const gradcamContainer = document.getElementById("gradcamContainer");
+    gradcamContainer.innerHTML = "";
+    
+    const weights = data.gradcam_weights || [];
+    weights.forEach((w) => {
+      const bar = document.createElement("div");
+      bar.className = "gradcam-bar" + (w > 0.45 ? " active" : "");
+      bar.style.height = `${(w * 100).toFixed(1)}%`;
+      gradcamContainer.appendChild(bar);
+    });
+    
+    const featImpContainer = document.getElementById("featImportanceContainer");
+    featImpContainer.innerHTML = "";
+    
+    Object.entries(data.feature_importance)
+      .sort((a, b) => b[1] - a[1])
+      .forEach(([col, val]) => {
+        const row = document.createElement("div");
+        row.className = "feat-imp-row";
+        row.innerHTML = `
+          <span class="feat-imp-name">${col}</span>
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <div class="feat-imp-track"><div class="feat-imp-fill" style="width: ${(val * 100).toFixed(1)}%;"></div></div>
+            <span style="font-family:'Fira Code'; font-size:0.75rem; color:var(--teal-light); width:32px; text-align:right;">${val.toFixed(2)}</span>
+          </div>
+        `;
+        featImpContainer.appendChild(row);
+      });
+      
+  } catch (err) {
+    classValEl.textContent = "Error";
+    console.error(err);
+  }
+}
+
+// ============================================================
+// Performance Evaluation: Metrics and Confusion Matrix
+// ============================================================
+async function loadModelInfo() {
+  try {
+    const res = await fetch(`${API_BASE}/model-info?mode=${currentMode}`);
+    if (!res.ok) throw new Error("Could not load model info");
+    const data = await res.json();
+    
+    document.getElementById("txtMstmAcc").textContent = `${(data.mstm_accuracy * 100).toFixed(1)}%`;
+    document.getElementById("fillMstmAcc").style.width = `${(data.mstm_accuracy * 100).toFixed(1)}%`;
+    
+    document.getElementById("txtSbamAcc").textContent = `${(data.sbam_accuracy * 100).toFixed(1)}%`;
+    document.getElementById("fillSbamAcc").style.width = `${(data.sbam_accuracy * 100).toFixed(1)}%`;
+    
+    document.getElementById("txtFusionAcc").textContent = `${(data.fusion_accuracy * 100).toFixed(1)}%`;
+    document.getElementById("fillFusionAcc").style.width = `${(data.fusion_accuracy * 100).toFixed(1)}%`;
+    
+    const tableBody = document.getElementById("metricsTable").querySelector("tbody");
+    tableBody.innerHTML = "";
+    
+    const classes = data.classes;
+    classes.forEach((cls) => {
+      const clsMetrics = data.classification_report[cls] || { precision: 0, recall: 0, "f1-score": 0 };
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td class="class-name">${cls}</td>
+        <td>${clsMetrics.precision.toFixed(3)}</td>
+        <td>${clsMetrics.recall.toFixed(3)}</td>
+        <td>${clsMetrics["f1-score"].toFixed(3)}</td>
+      `;
+      tableBody.appendChild(row);
+    });
+    
+    const macroAvg = data.classification_report["macro avg"] || { precision: 0, recall: 0, "f1-score": 0 };
+    const avgRow = document.createElement("tr");
+    avgRow.style.fontWeight = "bold";
+    avgRow.style.borderTop = "2px solid var(--border-active)";
+    avgRow.innerHTML = `
+      <td class="class-name">Macro Average</td>
+      <td>${macroAvg.precision.toFixed(3)}</td>
+      <td>${macroAvg.recall.toFixed(3)}</td>
+      <td>${macroAvg["f1-score"].toFixed(3)}</td>
+    `;
+    tableBody.appendChild(avgRow);
+    
+    const cmGrid = document.getElementById("cmGridContainer");
+    cmGrid.innerHTML = "";
+    
+    const headerRow = document.createElement("div");
+    headerRow.className = "cm-row";
+    headerRow.innerHTML = `<div class="cm-cell cm-label-header"></div>`;
+    classes.forEach((cls) => {
+      headerRow.innerHTML += `<div class="cm-cell cm-label-header" title="${cls}">${cls.substring(0, 3)}</div>`;
+    });
+    cmGrid.appendChild(headerRow);
+    
+    const matrix = data.confusion_matrix || [];
+    classes.forEach((cls, rIdx) => {
+      const row = document.createElement("div");
+      row.className = "cm-row";
+      row.innerHTML = `<div class="cm-cell cm-label-row">${cls}</div>`;
+      
+      const rowValues = matrix[rIdx] || [];
+      const rowSum = rowValues.reduce((a, b) => a + b, 0) || 1;
+      
+      classes.forEach((_, cIdx) => {
+        const val = rowValues[cIdx] !== undefined ? rowValues[cIdx] : 0;
+        const fraction = val / rowSum;
+        
+        let cellBg = `rgba(30, 43, 75, ${0.15 + fraction * 0.85})`;
+        if (rIdx === cIdx) {
+          cellBg = `rgba(20, 184, 166, ${0.25 + fraction * 0.75})`;
+        }
+        
+        row.innerHTML += `
+          <div class="cm-cell cm-val-cell" style="background: ${cellBg};" title="True: ${cls}, Pred: ${classes[cIdx]} = ${val}">
+            ${val}
+          </div>
+        `;
+      });
+      cmGrid.appendChild(row);
+    });
+    
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+// ============================================================
+// Initialization on page load
+// ============================================================
+window.addEventListener("DOMContentLoaded", () => {
+  generateFeatureSliders();
+  loadSamples();
+  loadModelInfo();
+});

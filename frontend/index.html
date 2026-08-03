@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seizure Prediction Suite — SBAM + MSTM Neural Simulation Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #020617;
+    --surface: rgba(15, 23, 42, 0.65);
+    --surface-card: rgba(30, 41, 59, 0.45);
+    --surface-hover: rgba(51, 65, 85, 0.6);
+    --border: rgba(255, 255, 255, 0.08);
+    --border-active: rgba(255, 255, 255, 0.2);
+    
+    --teal: #0D9488;
+    --teal-light: #14B8A6;
+    --teal-glow: rgba(20, 184, 166, 0.4);
+    
+    --coral: #E11D48;
+    --coral-light: #F43F5E;
+    --coral-glow: rgba(244, 63, 94, 0.4);
+    
+    --amber: #D97706;
+    --amber-light: #F59E0B;
+    --amber-glow: rgba(245, 158, 11, 0.4);
+    
+    --text: #F8FAFC;
+    --text-dim: #94A3B8;
+    --text-mute: #64748B;
+    
+    --glass: rgba(15, 23, 42, 0.45);
+    --glass-blur: blur(25px);
+  }
+  
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+    position: relative;
+  }
+  
+  /* Particle Background Canvas */
+  #bg-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -2;
+    pointer-events: none;
+    opacity: 0.45;
+  }
+  
+  /* Glowing Grid Overlay */
+  .grid-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+      linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+    background-size: 60px 60px;
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+  }
+  
+  .mono {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.85em;
+  }
+  
+  /* --- Navigation & Mode Switcher --- */
+  header {
+    background: rgba(2, 6, 23, 0.75);
+    backdrop-filter: var(--glass-blur);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding: 1.25rem 2.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 10px 40px -15px rgba(0, 0, 0, 0.6);
+  }
+  
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: var(--text);
+    text-decoration: none;
+    letter-spacing: -0.03em;
+  }
+  
+  .logo span {
+    color: var(--teal-light);
+    text-shadow: 0 0 15px var(--teal-glow);
+  }
+  
+  .pipeline-selector {
+    display: flex;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 0.3rem;
+  }
+  
+  .pipeline-btn {
+    border: none;
+    background: none;
+    color: var(--text-dim);
+    padding: 0.65rem 1.6rem;
+    font-size: 0.85rem;
+    font-family: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 100px;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  .pipeline-btn.active {
+    background: var(--teal-light);
+    color: var(--bg);
+    box-shadow: 0 4px 16px var(--teal-glow);
+  }
+  
+  .pipeline-btn.leakage-btn.active {
+    background: var(--amber-light);
+    box-shadow: 0 4px 16px var(--amber-glow);
+  }
+  
+  /* --- Hero --- */
+  .hero-sec {
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 7rem 2rem 5rem;
+    position: relative;
+  }
+  
+  .badge {
+    background: rgba(20, 184, 166, 0.08);
+    color: var(--teal-light);
+    border: 1px solid rgba(20, 184, 166, 0.25);
+    padding: 0.45rem 1.25rem;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 2rem;
+    box-shadow: 0 0 15px rgba(20, 184, 166, 0.05);
+  }
+  
+  h1 {
+    font-size: clamp(3rem, 7vw, 5.2rem);
+    line-height: 1.02;
+    max-width: 20ch;
+    margin-bottom: 2rem;
+    font-weight: 700;
+  }
+  
+  h1 em {
+    font-style: normal;
+    background: linear-gradient(135deg, var(--teal-light) 0%, #38BDF8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 2px 12px rgba(20, 184, 166, 0.25));
+  }
+  
+  .hero-desc {
+    color: var(--text-dim);
+    font-size: 1.35rem;
+    max-width: 56ch;
+    margin-bottom: 3.5rem;
+    font-weight: 300;
+  }
+  
+  .cta-row {
+    display: flex;
+    gap: 1.5rem;
+  }
+  
+  .btn-primary {
+    background: linear-gradient(135deg, var(--teal-light) 0%, var(--teal) 100%);
+    color: var(--text);
+    border: none;
+    padding: 1.1rem 2.6rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: 0 8px 24px rgba(20, 184, 166, 0.3);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  .btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 35px var(--teal-glow);
+  }
+  
+  .btn-secondary {
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 1.1rem 2.6rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s;
+    backdrop-filter: var(--glass-blur);
+  }
+  
+  .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--border-active);
+    transform: translateY(-2px);
+  }
+  
+  /* --- Layout & Sections --- */
+  main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+  }
+  
+  section {
+    padding: 6rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  
+  section:last-of-type {
+    border-bottom: none;
+  }
+  
+  .section-header {
+    margin-bottom: 4rem;
+  }
+  
+  .section-header h2 {
+    font-size: clamp(2.2rem, 4vw, 3.2rem);
+    margin-bottom: 1.25rem;
+  }
+  
+  .section-header p {
+    color: var(--text-dim);
+    font-size: 1.25rem;
+    max-width: 60ch;
+    margin-top: 0.5rem;
+    font-weight: 300;
+  }
+  
+  /* --- Glassmorphic Cards --- */
+  .glass-card {
+    background: var(--surface);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 2.5rem;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
+  }
+  
+  /* --- Tab Navigation --- */
+  .sim-tabs-nav {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1rem;
+  }
+  
+  .tab-btn {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 1.25rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0.5rem 1.25rem;
+    position: relative;
+    transition: all 0.3s;
+  }
+  
+  .tab-btn:hover {
+    color: var(--text);
+  }
+  
+  .tab-btn.active {
+    color: var(--teal-light);
+  }
+  
+  .tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1.15rem;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--teal-light) 0%, #38BDF8 100%);
+    border-radius: 10px;
+    box-shadow: 0 0 15px var(--teal-glow);
+  }
+  
+  /* --- Module A: ICU Bedside Monitor & Spectrogram --- */
+  .icu-panel {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    gap: 3.5rem;
+  }
+  
+  @media (max-width: 1024px) {
+    .icu-panel {
+      grid-template-columns: 1fr;
+      gap: 2.5rem;
+    }
+  }
+  
+  .icu-monitor-column {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  
+  .icu-eeg-monitor {
+    background: rgba(3, 7, 18, 0.95);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2.5rem;
+    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.9);
+  }
+  
+  .icu-eeg-channel {
+    margin-bottom: 1.5rem;
+    position: relative;
+  }
+  
+  .icu-eeg-channel:last-of-type {
+    margin-bottom: 0;
+  }
+  
+  .icu-eeg-channel-label {
+    position: absolute;
+    top: 5px;
+    left: 10px;
+    font-size: 0.75rem;
+    font-family: 'Fira Code', monospace;
+    color: var(--text-dim);
+    background: rgba(3, 7, 18, 0.85);
+    border: 1px solid rgba(255,255,255,0.06);
+    padding: 3px 9px;
+    border-radius: 6px;
+    z-index: 10;
+  }
+  
+  .icu-eeg-canvas {
+    width: 100%;
+    height: 90px;
+    display: block;
+  }
+  
+  /* 2D Spectrogram Generator */
+  .spectrogram-container {
+    background: rgba(3, 7, 18, 0.95);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.9);
+  }
+  
+  .spectrogram-title-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+  }
+  
+  .spectrogram-title-bar span {
+    font-size: 0.9rem;
+    font-family: 'Fira Code', monospace;
+    color: var(--text-dim);
+  }
+  
+  .spectrogram-canvas {
+    width: 100%;
+    height: 180px;
+    display: block;
+    border-radius: 10px;
+    background: #000;
+  }
+  
+  .icu-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    background: rgba(255,255,255,0.02);
+    padding: 1.5rem 2.5rem;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    backdrop-filter: var(--glass-blur);
+  }
+  
+  .icu-state-btns {
+    display: flex;
+    gap: 1rem;
+  }
+  
+  .state-btn {
+    border: 1px solid var(--border-active);
+    background: var(--surface-card);
+    color: var(--text);
+    padding: 0.85rem 1.8rem;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  .state-btn:hover {
+    background: var(--surface-hover);
+    transform: translateY(-2px);
+  }
+  
+  .state-btn.active-calm {
+    background: var(--teal-glow);
+    border-color: var(--teal-light);
+    color: var(--teal-light);
+    box-shadow: 0 0 15px rgba(20, 184, 166, 0.1);
+  }
+  
+  .state-btn.active-warning {
+    background: var(--amber-glow);
+    border-color: var(--amber-light);
+    color: var(--amber-light);
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.1);
+  }
+  
+  .state-btn.active-seizure {
+    background: var(--coral-glow);
+    border-color: var(--coral-light);
+    color: var(--coral-light);
+    animation: urgent-pulse 1s infinite alternate;
+  }
+  
+  @keyframes urgent-pulse {
+    from { border-color: var(--coral); box-shadow: 0 0 12px var(--coral-glow); }
+    to { border-color: var(--coral-light); box-shadow: 0 0 24px var(--coral-glow); }
+  }
+  
+  .icu-metrics-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  
+  .icu-metric-card {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+  }
+  
+  .icu-metric-title {
+    font-size: 0.8rem;
+    font-family: 'Fira Code', monospace;
+    color: var(--text-mute);
+    text-transform: uppercase;
+    margin-bottom: 0.85rem;
+    letter-spacing: 0.08em;
+  }
+  
+  .icu-metric-value {
+    font-size: 3.8rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+  }
+  
+  .icu-metric-value.state-calm { color: var(--teal-light); text-shadow: 0 0 25px var(--teal-glow); }
+  .icu-metric-value.state-warning { color: var(--amber-light); text-shadow: 0 0 25px var(--amber-glow); }
+  .icu-metric-value.state-seizure { color: var(--coral-light); text-shadow: 0 0 25px var(--coral-glow); }
+  
+  /* --- Circular Brain / Synchronization Web Visualizer (SBAM Representation) --- */
+  .sync-web-container {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    cursor: grab;
+  }
+  
+  .sync-web-container:active {
+    cursor: grabbing;
+  }
+  
+  #syncWebCanvas {
+    width: 100%;
+    height: 280px;
+    display: block;
+    background: rgba(3, 7, 18, 0.4);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+  }
+  
+  .sync-web-tip {
+    font-size: 0.7rem;
+    font-family: 'Fira Code', monospace;
+    color: var(--text-mute);
+    margin-top: 0.5rem;
+    text-align: center;
+  }
+  
+  /* --- Module B: Clinical Decision Support Portal --- */
+  .portal-grid {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 3rem;
+  }
+  
+  @media (max-width: 1024px) {
+    .portal-grid {
+      grid-template-columns: 1fr;
+      gap: 2.5rem;
+    }
+  }
+  
+  .portal-sidebar {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 1.5rem;
+    max-height: 740px;
+    overflow-y: auto;
+  }
+  
+  .portal-sample-header {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-mute);
+    margin-bottom: 1.25rem;
+    letter-spacing: 0.08em;
+  }
+  
+  .patient-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+  
+  .patient-card {
+    background: rgba(30, 41, 59, 0.35);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.1rem 1.35rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s;
+  }
+  
+  .patient-card:hover {
+    border-color: var(--border-active);
+    background: var(--surface-hover);
+    transform: translateY(-2px);
+  }
+  
+  .patient-card.active {
+    border-color: var(--teal-light);
+    background: rgba(20, 184, 166, 0.05);
+    box-shadow: 0 0 15px rgba(20, 184, 166, 0.05);
+  }
+  
+  .patient-card .patient-meta {
+    font-size: 0.75rem;
+    font-family: 'Fira Code', monospace;
+    color: var(--text-dim);
+  }
+  
+  .portal-workspace {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+  
+  .workspace-layout {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 2.5rem;
+  }
+  
+  @media (max-width: 1280px) {
+    .workspace-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  .workspace-box {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2.5rem;
+  }
+  
+  .workspace-box h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    margin-bottom: 1.75rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  /* --- Interactive EEG drawing pad --- */
+  .drawing-pad-container {
+    background: rgba(3, 7, 18, 0.95);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+  }
+  
+  .drawing-pad-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-bottom: 0.75rem;
+  }
+  
+  .drawing-pad-canvas {
+    width: 100%;
+    height: 120px;
+    display: block;
+    background: #000;
+    border-radius: 8px;
+    cursor: crosshair;
+  }
+  
+  /* --- Sliders Form --- */
+  .features-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    max-height: 480px;
+    overflow-y: auto;
+    padding-right: 0.75rem;
+  }
+  
+  @media (max-width: 580px) {
+    .features-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  .feature-slider-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    background: rgba(255,255,255,0.015);
+    padding: 0.85rem 1.1rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.04);
+  }
+  
+  .feature-slider-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-dim);
+  }
+  
+  .feature-slider-label span.feature-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 18ch;
+  }
+  
+  .feature-slider-label span.feature-val {
+    font-family: 'Fira Code', monospace;
+    color: var(--teal-light);
+  }
+  
+  .feature-slider-group input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+  }
+  
+  .feature-slider-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--teal-light);
+    cursor: pointer;
+    box-shadow: 0 0 8px var(--teal-glow);
+    transition: transform 0.1s;
+  }
+  
+  .feature-slider-group input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.25);
+  }
+  
+  .feature-slider-group.leakage-field {
+    border-color: rgba(245, 158, 11, 0.05);
+  }
+  
+  .feature-slider-group.leakage-field.disabled {
+    opacity: 0.25;
+    pointer-events: none;
+  }
+  
+  .feature-slider-group.leakage-field.disabled input[type="range"]::-webkit-slider-thumb {
+    background: var(--text-mute);
+    box-shadow: none;
+  }
+  
+  .portal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  
+  /* --- Prediction Outputs --- */
+  .prob-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.95rem;
+  }
+  
+  .prob-bar-label {
+    width: 78px;
+    font-size: 0.8rem;
+    font-family: 'Fira Code', monospace;
+    font-weight: 600;
+    color: var(--text-dim);
+  }
+  
+  .prob-bar-track {
+    flex: 1;
+    height: 14px;
+    background: rgba(3, 7, 18, 0.6);
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  
+  .prob-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--teal-light);
+    border-radius: 6px;
+    transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.4s;
+  }
+  
+  .prob-bar-fill.top-match {
+    background: linear-gradient(90deg, var(--coral-light) 0%, #F43F5E 100%);
+    box-shadow: 0 0 10px var(--coral-glow);
+  }
+  
+  .prob-bar-pct {
+    width: 50px;
+    text-align: right;
+    font-size: 0.8rem;
+    font-family: 'Fira Code', monospace;
+    font-weight: 600;
+  }
+  
+  /* --- Grad-CAM Heatmap & Feature Attributions --- */
+  .gradcam-bar-container {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 120px;
+    background: rgba(3, 7, 18, 0.6);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-top: 0.75rem;
+  }
+  
+  .gradcam-bar {
+    width: 4px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 100px;
+    transition: height 0.5s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.4s;
+  }
+  
+  .gradcam-bar.active {
+    background: var(--coral-light);
+    box-shadow: 0 0 8px var(--coral-glow);
+  }
+  
+  .feat-importance-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  .feat-imp-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    background: rgba(255,255,255,0.01);
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.02);
+  }
+  
+  .feat-imp-name {
+    color: var(--text-dim);
+  }
+  
+  .feat-imp-track {
+    width: 160px;
+    height: 8px;
+    background: rgba(3, 7, 18, 0.6);
+    border-radius: 4px;
+    align-self: center;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  
+  .feat-imp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--teal-light) 0%, #38BDF8 100%);
+    width: 0%;
+    transition: width 0.5s ease;
+  }
+  
+  /* --- Module C: Wearable Early Warning Simulator --- */
+  .wearable-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 3rem 0;
+  }
+  
+  .mock-phone {
+    width: 340px;
+    height: 640px;
+    background: #000;
+    border: 12px solid #27272A;
+    border-radius: 48px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 35px 80px -15px rgba(0, 0, 0, 0.9);
+  }
+  
+  .mock-phone-camera {
+    width: 130px;
+    height: 28px;
+    background: #27272A;
+    border-radius: 0 0 18px 18px;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+  }
+  
+  .mock-phone-screen {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+    padding: 3rem 1.75rem 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+  
+  .phone-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 500;
+  }
+  
+  .phone-notifications {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1.25rem;
+  }
+  
+  .phone-alert-card {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 5px solid var(--teal-light);
+    border-radius: 16px;
+    padding: 1.25rem;
+    backdrop-filter: blur(15px);
+    transform: translateY(20px);
+    opacity: 0;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  .phone-alert-card.alert-active {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  
+  .phone-alert-card.alert-warning {
+    border-left-color: var(--amber-light);
+  }
+  
+  .phone-alert-card.alert-seizure {
+    border-left-color: var(--coral-light);
+    animation: app-pulse 1s infinite alternate;
+  }
+  
+  @keyframes app-pulse {
+    from { box-shadow: 0 0 15px rgba(244, 63, 94, 0.1); }
+    to { box-shadow: 0 0 30px rgba(244, 63, 94, 0.4); }
+  }
+  
+  .phone-alert-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.35);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+  
+  .phone-alert-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 0.35rem;
+  }
+  
+  .phone-alert-body {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.75);
+    line-height: 1.4;
+  }
+  
+  .phone-watch-widget {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: 1.25rem;
+    text-align: center;
+    backdrop-filter: blur(10px);
+  }
+  
+  .phone-watch-title {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.35);
+    text-transform: uppercase;
+    margin-bottom: 0.35rem;
+    letter-spacing: 0.05em;
+  }
+  
+  .phone-watch-val {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--teal-light);
+    text-shadow: 0 0 10px var(--teal-glow);
+  }
+  
+  /* --- Model Performance Lab --- */
+  .perf-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+  }
+  
+  @media (max-width: 1024px) {
+    .perf-layout {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+  }
+  
+  .perf-metrics-card {
+    background: var(--surface);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2.5rem;
+    box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.6);
+  }
+  
+  .perf-metrics-card h3 {
+    font-size: 1.25rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.75rem;
+  }
+  
+  /* --- Confusion Matrix Grid --- */
+  .cm-grid-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-top: 1.5rem;
+  }
+  
+  .cm-row {
+    display: flex;
+    gap: 0.35rem;
+  }
+  
+  .cm-cell {
+    flex: 1;
+    height: 52px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.8rem;
+    font-family: 'Fira Code', monospace;
+    font-weight: 600;
+    border-radius: 6px;
+    color: var(--text);
+  }
+  
+  .cm-cell.cm-label-header {
+    background: transparent;
+    font-family: inherit;
+    font-weight: 700;
+    color: var(--text-mute);
+  }
+  
+  .cm-cell.cm-label-row {
+    background: transparent;
+    font-family: inherit;
+    font-weight: 700;
+    color: var(--text-mute);
+    justify-content: flex-end;
+    padding-right: 0.75rem;
+    max-width: 80px;
+  }
+  
+  .cm-cell.cm-val-cell {
+    background: rgba(31, 41, 55, 0.2);
+    border: 1px solid rgba(255,255,255,0.01);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  /* --- Metrics Table --- */
+  .metrics-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+  }
+  
+  .metrics-table th, .metrics-table td {
+    padding: 1rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  
+  .metrics-table th {
+    font-weight: 700;
+    color: var(--text-mute);
+  }
+  
+  .metrics-table td {
+    font-family: 'Fira Code', monospace;
+  }
+  
+  .metrics-table td.class-name {
+    font-family: inherit;
+    font-weight: 700;
+    color: var(--text);
+  }
+  
+  /* --- Warning Box --- */
+  .warning-box {
+    background: rgba(225, 29, 72, 0.03);
+    border: 1px solid var(--coral-glow);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-top: 3rem;
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+    box-shadow: 0 15px 35px -10px rgba(225, 29, 72, 0.05);
+  }
+  
+  .warning-icon {
+    font-size: 2.2rem;
+    line-height: 1;
+    color: var(--coral-light);
+    filter: drop-shadow(0 0 8px var(--coral-glow));
+  }
+  
+  .warning-content h4 {
+    font-size: 1.15rem;
+    color: var(--coral-light);
+    margin-bottom: 0.6rem;
+  }
+  
+  .warning-content p {
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+  
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 4rem 0;
+    text-align: center;
+    color: var(--text-mute);
+    font-size: 0.9rem;
+    margin-top: 6rem;
+  }
+  
+  /* --- Custom Tooltips --- */
+  .info-tooltip-container {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+    margin-left: 6px;
+    color: var(--teal-light);
+    font-size: 0.9em;
+  }
+  
+  .info-tooltip-text {
+    visibility: hidden;
+    width: 280px;
+    background-color: var(--surface-card);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-active);
+    color: var(--text-dim);
+    text-align: left;
+    border-radius: 10px;
+    padding: 1rem;
+    position: absolute;
+    z-index: 10;
+    bottom: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.8);
+  }
+  
+  .info-tooltip-container:hover .info-tooltip-text {
+    visibility: visible;
+    opacity: 1;
+  }
+</style>
+</head>
+<body>
+
+  <!-- Background Particle Animation -->
+  <canvas id="bg-canvas"></canvas>
+  <div class="grid-overlay"></div>
+
+  <!-- HEADER / MODE SWITCHER -->
+  <header>
+    <a href="#" class="logo">
+      <span>Neural</span>Sync.ai
+    </a>
+    <div class="pipeline-selector">
+      <button class="pipeline-btn active" id="btnAsTrained" onclick="setPipelineMode('as_trained')">
+        As Trained Mode (98.8% Accuracy)
+      </button>
+      <button class="pipeline-btn leakage-btn" id="btnCorrected" onclick="setPipelineMode('leakage_corrected')">
+        Leakage-Corrected Mode
+      </button>
+    </div>
+  </header>
+
+  <!-- HERO SECTION -->
+  <section class="hero-sec">
+    <div class="badge">SBAM + MSTM Neural Architecture</div>
+    <h1>Predicting Epileptic Seizures via <em>Multi-Scale</em> Synchronization.</h1>
+    <p class="hero-desc">
+      A dual-branch neural framework utilizing multi-head spatial attention (SBAM) and temporal dilated convolutions (MSTM) to compute pre-onset anomalies before seizure transition.
+    </p>
+    <div class="cta-row">
+      <a href="#simulators" class="btn-primary">Launch Live Simulator</a>
+      <a href="#performance" class="btn-secondary">View Performance Lab</a>
+    </div>
+  </section>
+
+  <main>
+    
+    <!-- CORE ARCHITECTURE & NEURAL DYNAMICS -->
+    <section id="architecture-overview" style="padding: 2rem 0 4rem; border-bottom: 1px solid var(--border);">
+      <div class="section-header">
+        <div class="badge" style="background:rgba(20, 184, 166, 0.05); margin-bottom:0.75rem;">Model Overview</div>
+        <h2>Dual-Branch Attention &amp; Dilated Temporal Convolutions</h2>
+        <p>Combining Synchronization-Based Attention Mechanism (SBAM) and Multi-Scale Temporal Modeling (MSTM) to forecast neural anomalies before onset.</p>
+      </div>
+      <div style="display:grid; grid-template-columns:1.2fr 0.8fr; gap:3rem; align-items:center;">
+        <div class="glass-card" style="padding:1.5rem; text-align:center; background:rgba(15, 23, 42, 0.45);">
+          <h4 style="font-size:0.85rem; font-family:'Fira Code'; color:var(--teal-light); margin-bottom:1rem; text-align:left;">MSTM + SBAM FUSION NET</h4>
+          <img src="mstm_sbam_architecture.png" alt="MSTM + SBAM Fusion Architecture Diagram" style="width:100%; height:auto; border-radius:12px; border:1px solid var(--border); filter: saturate(1.1);">
+        </div>
+        <div style="display:flex; flex-direction:column; gap:1.5rem;">
+          <div class="glass-card" style="padding:1.5rem; text-align:center; background:rgba(15, 23, 42, 0.45);">
+            <h4 style="font-size:0.85rem; font-family:'Fira Code'; color:var(--coral-light); margin-bottom:1rem; text-align:left;">NEURAL ELECTRODE SYNCHRONIZATION</h4>
+            <img src="clinical_brain_sync.png" alt="Brain Synchronization Scan" style="width:100%; height:auto; border-radius:12px; border:1px solid var(--border);">
+          </div>
+          <div style="font-size:0.95rem; color:var(--text-dim); line-height:1.6;">
+            The model extracts temporal features across different time steps using dilated causal convolutions in the <strong>MSTM branch</strong>, while the <strong>SBAM branch</strong> computes spatial dependencies and cross-channel attention weights dynamically.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+    <!-- DATA LEAKAGE CALLOUT -->
+    <div class="warning-box">
+      <div class="warning-icon">⚠️</div>
+      <div class="warning-content">
+        <h4>Label Leakage &amp; Educational Disclosure</h4>
+        <p>
+          The original dataset (<span class="mono">train.csv</span>) contains consensus votes from annotators (<span class="mono">vote_*</span> columns) that directly leak the target labels. Standard training models reach **98.8% accuracy** by memorizing this leakage.
+        </p>
+        <p style="margin-top: 0.65rem;">
+          To witness the true complexity of predicting events from structural data alone, toggle the header to <strong>"Leakage-Corrected Mode"</strong>. This reloads the models trained entirely without leaking variables, revealing a realistic test baseline (~42.2% accuracy).
+        </p>
+      </div>
+    </div>
+
+    <!-- SIMULATORS SECTION -->
+    <section id="simulators">
+      <div class="section-header">
+        <div class="badge" style="background:rgba(20, 184, 166, 0.05); margin-bottom:0.75rem;">Simulations</div>
+        <h2>Real-Time Neural Predictor Simulator</h2>
+        <p>Observe the live predictive models running across ICU bedside monitoring loops, clinical portals, and smartwatch caregiver systems.</p>
+      </div>
+
+      <!-- Tab Controller -->
+      <div class="sim-tabs-nav">
+        <button class="tab-btn active" onclick="switchTab('icu')">ICU Bedside Monitor &amp; Spectrogram</button>
+        <button class="tab-btn" onclick="switchTab('portal')">Clinical Diagnostic Portal</button>
+        <button class="tab-btn" onclick="switchTab('wearable')">Companion Wearable Alert</button>
+      </div>
+
+      <div class="sim-content-wrapper glass-card">
+        
+        <!-- PANEL A: ICU Bedside Monitor -->
+        <div class="sim-tab-panel active" id="panel-icu">
+          <div class="icu-panel">
+            <div class="icu-monitor-column">
+              
+              <!-- EEG Channels -->
+              <div class="icu-eeg-monitor">
+                <div class="icu-eeg-channel">
+                  <div class="icu-eeg-channel-label">EEG Ch 1 - Frontal (Fp1)</div>
+                  <canvas class="icu-eeg-canvas" id="canvasCh1"></canvas>
+                </div>
+                <div class="icu-eeg-channel">
+                  <div class="icu-eeg-channel-label">EEG Ch 2 - Central (C3)</div>
+                  <canvas class="icu-eeg-canvas" id="canvasCh2"></canvas>
+                </div>
+                <div class="icu-eeg-channel">
+                  <div class="icu-eeg-channel-label">EEG Ch 3 - Temporal (T3)</div>
+                  <canvas class="icu-eeg-canvas" id="canvasCh3"></canvas>
+                </div>
+                <div class="icu-eeg-channel">
+                  <div class="icu-eeg-channel-label">EEG Ch 4 - Occipital (O1)</div>
+                  <canvas class="icu-eeg-canvas" id="canvasCh4"></canvas>
+                </div>
+              </div>
+              
+              <!-- 2D Spectrogram Simulation -->
+              <div class="spectrogram-container">
+                <div class="spectrogram-title-bar">
+                  <span>Simulated 2D Frequency Spectrogram (Time vs Frequency Heatmap)</span>
+                  <span style="color:var(--text-mute); font-size:0.75rem;">1D/2D CNN Feature Input</span>
+                </div>
+                <canvas class="spectrogram-canvas" id="spectrogramCanvas"></canvas>
+              </div>
+              
+              <div class="icu-controls" style="display:flex; flex-direction:column; gap:1rem; align-items:stretch;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+                  <div style="display:flex; align-items:center; gap:0.75rem;">
+                    <span style="font-size:0.9rem; font-weight:600; color:var(--text-dim);">Set Seizure Risk %:</span>
+                    <input type="number" id="riskInput" min="0" max="100" value="5" oninput="setIcuRisk(this.value)" style="background:rgba(255,255,255,0.05); border:1px solid var(--border-active); color:var(--text); padding:0.4rem 0.8rem; border-radius:6px; width:74px; font-family:'Fira Code', monospace; font-size:0.95rem; text-align:center; outline:none;">
+                  </div>
+                  <input type="range" id="riskSlider" min="0" max="100" value="5" oninput="setIcuRisk(this.value)" style="flex:1; min-width:200px; -webkit-appearance:none; height:6px; background:var(--border); border-radius:3px; outline:none;">
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size: 0.85rem; color: var(--text-dim); font-family: 'Fira Code', monospace; font-weight: 500;">
+                  <span id="icu-status-text">Patient Status: Stable</span>
+                  <span id="icu-risk-badge" style="background:var(--teal-glow); color:var(--teal-light); border:1px solid rgba(20,184,166,0.3); padding:2px 8px; border-radius:4px;">CALM</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="icu-metrics-sidebar">
+              <div class="icu-metric-card">
+                <div class="icu-metric-title">Seizure Risk Index</div>
+                <div class="icu-metric-value state-calm" id="icu-risk-val">5%</div>
+              </div>
+              <div class="icu-metric-card">
+                <div class="icu-metric-title">
+                  SBAM 3D Brain Sphere
+                  <div class="info-tooltip-container">ⓘ
+                    <span class="info-tooltip-text">A rotating 3D spatial node visualization of the SBAM Attention layers. Click and drag or hover to rotate in 3D. Active connections change dynamically.</span>
+                  </div>
+                </div>
+                
+                <div class="sync-web-container">
+                  <canvas id="syncWebCanvas"></canvas>
+                  <div class="sync-web-tip">← Drag or Hover to Rotate 3D Brain →</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- PANEL B: Clinical Diagnostic Portal -->
+        <div class="sim-tab-panel" id="panel-portal">
+          <div class="portal-grid">
+            <div class="portal-sidebar">
+              <div class="portal-sample-header">Held-Out Patient Records</div>
+              <div class="patient-list" id="patientList">
+                <!-- Patient cards dynamically injected here -->
+              </div>
+            </div>
+            
+            <div class="portal-workspace">
+              <div class="workspace-layout">
+                <!-- Sliders panel -->
+                <div class="workspace-box">
+                  
+                  <!-- Custom EEG Drawing Pad -->
+                  <h3>EEG Neural Signal Drawing Pad</h3>
+                  <div class="drawing-pad-container">
+                    <div class="drawing-pad-header">
+                      <span>Draw a signal wave using your mouse/finger to test live classification:</span>
+                      <button class="btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.75rem; border-radius: 4px;" onclick="clearDrawingPad(event)">Clear Pad</button>
+                    </div>
+                    <canvas class="drawing-pad-canvas" id="drawingPadCanvas"></canvas>
+                  </div>
+                  
+                  <h3>Interactive Feature Sliders
+                    <div class="info-tooltip-container">ⓘ
+                      <span class="info-tooltip-text">Modify values manually to test how the Fusion classifier responds. In Leakage-Corrected mode, vote sliders are locked and zeroed out to guarantee no label leakage.</span>
+                    </div>
+                  </h3>
+                  <form id="slidersForm" class="features-grid">
+                    <!-- Feature sliders will be dynamically injected here -->
+                  </form>
+                  <div class="portal-actions">
+                    <button class="btn-secondary" onclick="resetForm()">Reset Sliders</button>
+                    <button class="btn-primary" onclick="triggerPredict()">Run Diagnostic Predict</button>
+                  </div>
+                </div>
+                
+                <!-- Output panel -->
+                <div class="workspace-box">
+                  <h3>Live Diagnostic Report</h3>
+                  <div style="margin-bottom: 2rem;">
+                    <div style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 0.5rem;">Classification Forecast</div>
+                    <div style="font-size: 2.2rem; font-weight: 800; color: var(--teal-light);" id="predictedClassVal">—</div>
+                  </div>
+                  
+                  <div style="margin-bottom: 2rem;">
+                    <div style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 1rem;">Class Probability Distribution</div>
+                    <div id="probBarContainer">
+                      <!-- Probabilities will be rendered here -->
+                    </div>
+                  </div>
+                  
+                  <!-- Explainability visualizers -->
+                  <div>
+                    <div style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 0.5rem; display: flex; justify-content: space-between;">
+                      <span>1D Grad-CAM Activation Heatmap (conv1d_sbm layer)</span>
+                      <span style="font-family: 'Fira Code', monospace; font-size: 0.75rem;">128 SBM Attention Steps</span>
+                    </div>
+                    <div class="gradcam-bar-container" id="gradcamContainer">
+                      <!-- 128 bars of Gradcam weights -->
+                    </div>
+                  </div>
+                  
+                  <div style="margin-top: 2rem;">
+                    <div style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 0.5rem;">Feature Gradient Attributions (Input Importance)</div>
+                    <div class="feat-importance-container" id="featImportanceContainer">
+                      <!-- Input feature importance bars -->
+                    </div>
+                  </div>
+                  
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- PANEL C: Wearable Early Warning Simulator -->
+        <div class="sim-tab-panel" id="panel-wearable">
+          <div class="wearable-container" style="display:flex; gap:4rem; align-items:center; justify-content:center; flex-wrap:wrap;">
+            <div class="mock-phone">
+              <div class="mock-phone-camera"></div>
+              <div class="mock-phone-screen">
+                <div class="phone-header">
+                  <span>11:24 PM</span>
+                  <span style="display:flex; gap:0.3rem;">📶 🔋</span>
+                </div>
+                
+                <div class="phone-notifications">
+                  <div class="phone-alert-card alert-active" id="phoneNotification">
+                    <div class="phone-alert-header">
+                      <span>NeuralSync Alert</span>
+                      <span>Just Now</span>
+                    </div>
+                    <div class="phone-alert-title">Normal Status</div>
+                    <div class="phone-alert-body">Neural synchronization parameters are within baseline limits. Risk index: 5%.</div>
+                  </div>
+                </div>
+                
+                <div class="phone-watch-widget">
+                  <div class="phone-watch-title">Watch Companion Sync</div>
+                  <div class="phone-watch-val" id="watchSyncStatus">Active (Stable)</div>
+                </div>
+              </div>
+            </div>
+            
+            <div style="display:flex; flex-direction:column; gap:1.5rem; align-items:center;">
+              <h4 style="font-family:'Fira Code'; font-size:0.85rem; color:var(--coral-light); margin-bottom:-0.50rem;">SMARTWATCH COMPANION ALERT</h4>
+              <img src="smartwatch_alert.png" alt="Smartwatch Companion Mockup Alert" style="width:300px; height:auto; border-radius:24px; border:1px solid var(--border); box-shadow:0 25px 50px rgba(0,0,0,0.6);">
+            </div>
+          </div>
+        </div>
+        
+      </div>
+    </section>
+
+    <!-- MODEL PERFORMANCE SECTION -->
+    <section id="performance">
+      <div class="section-header">
+        <div class="badge" style="background:rgba(20, 184, 166, 0.05); margin-bottom:0.75rem;">validation lab</div>
+        <h2>Model Performance &amp; Evaluation</h2>
+        <p>A comparative performance breakdown computed on the held-out test split, contrasting branch architectures and evaluating predictions.</p>
+      </div>
+
+      <div class="perf-layout">
+        <!-- Accuracy comparisons -->
+        <div class="perf-metrics-card">
+          <h3>Architecture Branch Accuracies</h3>
+          <div style="display:flex; flex-direction:column; gap:1.5rem;">
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:0.5rem;">
+                <span style="font-weight:600;">Multi-Scale Temporal Modeling (MSTM) Only</span>
+                <span id="txtMstmAcc" style="font-family:'Fira Code'; font-weight:700; color:var(--text-dim);">—</span>
+              </div>
+              <div class="prob-bar-track"><div class="prob-bar-fill" id="fillMstmAcc" style="width: 0%;"></div></div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:0.5rem;">
+                <span style="font-weight:600;">Synchronization-Based Attention (SBAM) Only</span>
+                <span id="txtSbamAcc" style="font-family:'Fira Code'; font-weight:700; color:var(--text-dim);">—</span>
+              </div>
+              <div class="prob-bar-track"><div class="prob-bar-fill" id="fillSbamAcc" style="width: 0%;"></div></div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:0.5rem;">
+                <span style="font-weight:600; color:var(--teal-light);">Combined SBAM + MSTM Fusion Model</span>
+                <span id="txtFusionAcc" style="font-family:'Fira Code'; font-weight:700; color:var(--teal-light);">—</span>
+              </div>
+              <div class="prob-bar-track"><div class="prob-bar-fill" id="fillFusionAcc" style="width: 0%; background: var(--teal-light);"></div></div>
+            </div>
+          </div>
+          
+          <h3 style="margin-top: 3.5rem;">Per-Class Evaluation Details</h3>
+          <table class="metrics-table" id="metricsTable">
+            <thead>
+              <tr>
+                <th>Class</th>
+                <th>Precision</th>
+                <th>Recall</th>
+                <th>F1-Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Row metrics dynamic injection -->
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Confusion matrix -->
+        <div class="perf-metrics-card">
+          <h3>Test Split Confusion Matrix</h3>
+          <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 1.5rem;">Evaluating cross-class predictions. Diagonal cells represent true positive predictions.</p>
+          <div class="cm-grid-container" id="cmGridContainer">
+            <!-- Dynamic grid columns injection -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    NeuralSync.ai Seizure Prediction Showcase — Built with FastAPI, TensorFlow, &amp; HTML5 Canvas.<br>
+    Academic &amp; Professional Portfolio Project. Not a clinically certified medical device.
+  </footer>
+
+  <div id="toast-container" style="position:fixed; bottom:2rem; right:2rem; z-index:1000; display:flex; flex-direction:column; gap:0.75rem;"></div>
+  <script src="script.js"></script>
+</body>
+</html>
