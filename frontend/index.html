@@ -1210,6 +1210,359 @@
     visibility: visible;
     opacity: 1;
   }
+
+  /* --- Comprehensive Mobile Responsiveness --- */
+  .arch-overview-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 3rem;
+    align-items: center;
+  }
+
+  @media (max-width: 992px) {
+    .arch-overview-grid {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    header {
+      padding: 0.85rem 1rem;
+      flex-direction: column;
+      gap: 0.85rem;
+      align-items: stretch;
+    }
+    
+    .logo {
+      font-size: 1.25rem;
+      justify-content: center;
+    }
+    
+    .pipeline-selector {
+      width: 100%;
+      display: flex;
+      padding: 0.25rem;
+      gap: 0.25rem;
+    }
+    
+    .pipeline-btn {
+      flex: 1;
+      padding: 0.55rem 0.65rem;
+      font-size: 0.72rem;
+      text-align: center;
+      white-space: normal;
+      line-height: 1.25;
+    }
+    
+    .hero-sec {
+      min-height: auto;
+      padding: 3.5rem 1rem 2.5rem;
+    }
+    
+    .badge {
+      font-size: 0.72rem;
+      padding: 0.35rem 0.9rem;
+      margin-bottom: 1.25rem;
+    }
+    
+    h1 {
+      font-size: clamp(1.85rem, 6.8vw, 2.75rem);
+      line-height: 1.15;
+      margin-bottom: 1.25rem;
+      max-width: 100%;
+    }
+    
+    .hero-desc {
+      font-size: 0.95rem;
+      line-height: 1.55;
+      margin-bottom: 2rem;
+      max-width: 100%;
+    }
+    
+    .cta-row {
+      flex-direction: column;
+      width: 100%;
+      gap: 0.85rem;
+    }
+    
+    .btn-primary, .btn-secondary {
+      width: 100%;
+      text-align: center;
+      padding: 0.95rem 1.5rem;
+      font-size: 0.95rem;
+    }
+    
+    main {
+      padding: 1.5rem 1rem;
+    }
+    
+    section {
+      padding: 2.5rem 0;
+    }
+    
+    .section-header {
+      margin-bottom: 2rem;
+    }
+    
+    .section-header h2 {
+      font-size: 1.7rem;
+    }
+    
+    .section-header p {
+      font-size: 0.95rem;
+    }
+    
+    .glass-card {
+      padding: 1.25rem 1rem;
+      border-radius: 16px;
+    }
+    
+    .warning-box {
+      padding: 1.25rem 1rem;
+      gap: 1rem;
+      margin-top: 2rem;
+      flex-direction: column;
+    }
+    
+    .warning-icon {
+      font-size: 1.75rem;
+    }
+    
+    .warning-content h4 {
+      font-size: 1rem;
+    }
+    
+    .warning-content p {
+      font-size: 0.85rem;
+    }
+    
+    .sim-tabs-nav {
+      overflow-x: auto;
+      flex-wrap: nowrap;
+      gap: 0.5rem;
+      padding-bottom: 0.65rem;
+      margin-bottom: 1.5rem;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    
+    .sim-tabs-nav::-webkit-scrollbar {
+      display: none;
+    }
+    
+    .tab-btn {
+      font-size: 0.9rem;
+      padding: 0.5rem 0.85rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    
+    .tab-btn.active::after {
+      bottom: -0.75rem;
+    }
+    
+    .icu-eeg-monitor {
+      padding: 1.25rem 0.75rem;
+      border-radius: 14px;
+    }
+    
+    .icu-eeg-canvas {
+      height: 65px;
+    }
+    
+    .spectrogram-container {
+      padding: 1.25rem 0.75rem;
+      border-radius: 14px;
+    }
+    
+    .spectrogram-canvas {
+      height: 130px;
+    }
+    
+    .spectrogram-title-bar {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.35rem;
+    }
+    
+    .spectrogram-title-bar span {
+      font-size: 0.78rem;
+    }
+    
+    .icu-controls {
+      padding: 1rem 0.85rem;
+      border-radius: 14px;
+    }
+    
+    .icu-metric-card {
+      padding: 1.25rem 1rem;
+      border-radius: 16px;
+    }
+    
+    .icu-metric-value {
+      font-size: 2.8rem;
+    }
+    
+    #syncWebCanvas {
+      height: 220px;
+    }
+    
+    .portal-grid {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+    
+    .portal-sidebar {
+      max-height: 260px;
+      padding: 1rem;
+    }
+    
+    .workspace-layout {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+    
+    .workspace-box {
+      padding: 1.25rem 1rem;
+      border-radius: 16px;
+    }
+    
+    .workspace-box h3 {
+      font-size: 1.05rem;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+    }
+    
+    .features-grid {
+      grid-template-columns: 1fr;
+      max-height: 380px;
+      padding-right: 0;
+      gap: 0.85rem;
+    }
+    
+    .feature-slider-group {
+      padding: 0.75rem 0.85rem;
+    }
+    
+    .drawing-pad-container {
+      padding: 0.85rem;
+    }
+    
+    .drawing-pad-canvas {
+      height: 90px;
+    }
+    
+    .portal-actions {
+      flex-direction: column;
+      width: 100%;
+      gap: 0.75rem;
+    }
+    
+    .portal-actions button {
+      width: 100%;
+      padding: 0.85rem;
+    }
+    
+    .feat-imp-track {
+      width: 90px;
+    }
+    
+    .feat-imp-row {
+      font-size: 0.75rem;
+      padding: 0.4rem 0.6rem;
+    }
+    
+    .prob-bar-label {
+      width: 60px;
+      font-size: 0.75rem;
+    }
+    
+    .prob-bar-pct {
+      width: 45px;
+      font-size: 0.75rem;
+    }
+    
+    .wearable-container {
+      padding: 1.5rem 0;
+      gap: 2.5rem !important;
+    }
+    
+    .mock-phone {
+      width: 100%;
+      max-width: 320px;
+      height: 570px;
+      border-width: 8px;
+      border-radius: 36px;
+    }
+    
+    .mock-phone-camera {
+      width: 100px;
+      height: 22px;
+    }
+    
+    .mock-phone-screen {
+      padding: 2.5rem 1.25rem 1.5rem;
+    }
+    
+    .perf-layout {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+    
+    .perf-metrics-card {
+      padding: 1.25rem 1rem;
+      border-radius: 16px;
+    }
+    
+    .cm-grid-container {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 0.5rem;
+    }
+    
+    .cm-cell {
+      height: 36px;
+      font-size: 0.68rem;
+    }
+    
+    .cm-cell.cm-label-row {
+      max-width: 65px;
+      font-size: 0.68rem;
+      padding-right: 0.35rem;
+    }
+    
+    .metrics-table {
+      font-size: 0.78rem;
+    }
+    
+    .metrics-table th, .metrics-table td {
+      padding: 0.65rem 0.45rem;
+    }
+    
+    footer {
+      padding: 2.5rem 1rem;
+      margin-top: 3.5rem;
+      font-size: 0.8rem;
+      line-height: 1.6;
+    }
+    
+    #toast-container {
+      right: 1rem !important;
+      left: 1rem !important;
+      bottom: 1rem !important;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .pipeline-btn {
+      font-size: 0.66rem;
+      padding: 0.45rem 0.35rem;
+    }
+    h1 {
+      font-size: 1.75rem;
+    }
+  }
 </style>
 </head>
 <body>
@@ -1255,7 +1608,7 @@
         <h2>Dual-Branch Attention &amp; Dilated Temporal Convolutions</h2>
         <p>Combining Synchronization-Based Attention Mechanism (SBAM) and Multi-Scale Temporal Modeling (MSTM) to forecast neural anomalies before onset.</p>
       </div>
-      <div style="display:grid; grid-template-columns:1.2fr 0.8fr; gap:3rem; align-items:center;">
+      <div class="arch-overview-grid">
         <div class="glass-card" style="padding:1.5rem; text-align:center; background:rgba(15, 23, 42, 0.45);">
           <h4 style="font-size:0.85rem; font-family:'Fira Code'; color:var(--teal-light); margin-bottom:1rem; text-align:left;">MSTM + SBAM FUSION NET</h4>
           <img src="mstm_sbam_architecture.png" alt="MSTM + SBAM Fusion Architecture Diagram" style="width:100%; height:auto; border-radius:12px; border:1px solid var(--border); filter: saturate(1.1);">
@@ -1344,7 +1697,7 @@
                     <span style="font-size:0.9rem; font-weight:600; color:var(--text-dim);">Set Seizure Risk %:</span>
                     <input type="number" id="riskInput" min="0" max="100" value="5" oninput="setIcuRisk(this.value)" style="background:rgba(255,255,255,0.05); border:1px solid var(--border-active); color:var(--text); padding:0.4rem 0.8rem; border-radius:6px; width:74px; font-family:'Fira Code', monospace; font-size:0.95rem; text-align:center; outline:none;">
                   </div>
-                  <input type="range" id="riskSlider" min="0" max="100" value="5" oninput="setIcuRisk(this.value)" style="flex:1; min-width:200px; -webkit-appearance:none; height:6px; background:var(--border); border-radius:3px; outline:none;">
+                  <input type="range" id="riskSlider" min="0" max="100" value="5" oninput="setIcuRisk(this.value)" style="flex:1; min-width:140px; width:100%; -webkit-appearance:none; height:6px; background:var(--border); border-radius:3px; outline:none;">
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; font-size: 0.85rem; color: var(--text-dim); font-family: 'Fira Code', monospace; font-weight: 500;">
                   <span id="icu-status-text">Patient Status: Stable</span>

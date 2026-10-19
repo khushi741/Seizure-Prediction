@@ -1,7 +1,6 @@
 // ============================================================
 // CONFIG — FastAPI Backend Address
-// In production, set DEPLOYED_BACKEND_URL to your Render/Cloud API endpoint, e.g. "https://seizure-prediction-api.onrender.com"
-const DEPLOYED_BACKEND_URL = ""; 
+const DEPLOYED_BACKEND_URL = "https://seizure-prediction-api.onrender.com"; 
 
 const isLocalhost = Boolean(
   window.location.hostname === "localhost" ||
@@ -11,8 +10,7 @@ const isLocalhost = Boolean(
 
 const API_BASE = window.API_BASE
   || localStorage.getItem("SEIZURE_API_BASE")
-  || DEPLOYED_BACKEND_URL
-  || (isLocalhost ? "http://localhost:8000" : "");
+  || (isLocalhost ? "http://localhost:8000" : DEPLOYED_BACKEND_URL);
 
 // State management
 let currentMode = "as_trained";
