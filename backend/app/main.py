@@ -12,10 +12,15 @@ import pandas as pd
 import tensorflow as tf
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 MODELS_DIR = BASE_DIR / "saved_models"
+
+# Detect if static frontend assets are co-located (e.g. for unified deployment or local run)
+frontend_candidates = [BASE_DIR.parent / "frontend", BASE_DIR / "frontend"]
+frontend_dir = next((p for p in frontend_candidates if p.exists() and (p / "index.html").exists()), None)
 
 app = FastAPI(title="Seizure Prediction API (SBAM + MSTM Fusion)")
 
@@ -143,9 +148,18 @@ def compute_feature_gradients(sync_model, tcn_mstm_model, fusion_model, x_scaled
         importance /= max_val
     return importance.tolist()
 
-@app.get("/")
-def root():
-    return {"status": "ok", "message": "Seizure Prediction API — see /docs for endpoints"}
+@app.get("/health")
+def health():
+    return {
+        "status": "ok",
+        "message": "Seizure Prediction API is healthy",
+        "available_modes": list(pipelines.keys())
+    }
+
+if not frontend_dir:
+    @app.get("/")
+    def root():
+        return {"status": "ok", "message": "Seizure Prediction API — see /docs for endpoints"}
 
 @app.get("/samples")
 def get_samples():
@@ -217,3 +231,9 @@ def predict(req: PredictRequest):
         "gradcam_weights": gradcam_weights,
         "feature_importance": feature_importance_dict
     }
+
+# ----------------------------------------------------------------------
+# Mount static frontend if co-located
+# ----------------------------------------------------------------------
+if frontend_dir:
+    app.mount("/", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")

@@ -1,0 +1,32 @@
+services:
+  # ==============================================================
+  # 1. FastAPI Backend API (Docker with Python 3.11 & TensorFlow-CPU)
+  # ==============================================================
+  - type: web
+    name: seizure-prediction-api
+    runtime: docker
+    plan: free
+    region: oregon
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 8000
+
+  # ==============================================================
+  # 2. Interactive Frontend Showcase (Static Site on Global CDN)
+  # ==============================================================
+  - type: web
+    name: seizure-prediction-frontend
+    runtime: static
+    plan: free
+    region: oregon
+    rootDir: frontend
+    staticPublishPath: .
+    autoDeploy: true
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
