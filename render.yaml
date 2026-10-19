@@ -21,8 +21,6 @@ services:
   - type: web
     name: seizure-prediction-frontend
     runtime: static
-    plan: free
-    region: oregon
     rootDir: frontend
     staticPublishPath: .
     autoDeploy: true
