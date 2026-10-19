@@ -502,11 +502,23 @@ if (syncWebCanvas) {
 }
 
 // ============================================================
-// Simulators: Wearable early Warning Simulator
+// Simulators: Wearable Early Warning Simulator (Phone View)
 // ============================================================
 function updateWearableAlert(state) {
   const card = document.getElementById("phoneNotification");
   const watchStatus = document.getElementById("watchSyncStatus");
+  const phoneEegStatus = document.getElementById("phoneEegStatus");
+  const phoneTime = document.getElementById("phoneTime");
+  const phoneAlertTime = document.getElementById("phoneAlertTime");
+  
+  if (phoneTime) {
+    const now = new Date();
+    phoneTime.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+  if (phoneAlertTime) {
+    phoneAlertTime.textContent = "Just Now";
+  }
+
   if (!card || !watchStatus) return;
   
   card.className = "phone-alert-card alert-active";
@@ -514,24 +526,91 @@ function updateWearableAlert(state) {
   if (state === "calm") {
     card.classList.remove("alert-warning", "alert-seizure");
     card.querySelector(".phone-alert-title").textContent = "Normal Status";
-    card.querySelector(".phone-alert-body").textContent = "Neural synchronization parameters are within baseline limits. Risk index: 5%.";
+    card.querySelector(".phone-alert-body").textContent = `Neural synchronization parameters are within baseline limits. Risk index: ${currentIcuRisk}%.`;
     watchStatus.textContent = "Active (Stable)";
     watchStatus.style.color = "var(--teal-light)";
+    if (phoneEegStatus) {
+      phoneEegStatus.textContent = "STABLE";
+      phoneEegStatus.style.color = "var(--teal-light)";
+    }
   } else if (state === "warning") {
     card.classList.add("alert-warning");
     card.classList.remove("alert-seizure");
     card.querySelector(".phone-alert-title").textContent = "⚠️ Early Warning Alert";
-    card.querySelector(".phone-alert-body").textContent = "Pre-ictal synchronization detected in Patient #30539. High risk of seizure within 10-15 minutes.";
+    card.querySelector(".phone-alert-body").textContent = `Pre-ictal synchronization detected (Risk: ${currentIcuRisk}%). High likelihood of seizure transition within 10-15 minutes.`;
     watchStatus.textContent = "Warning (Sync Alert)";
     watchStatus.style.color = "var(--amber-light)";
+    if (phoneEegStatus) {
+      phoneEegStatus.textContent = "PRE-ICTAL WARNING";
+      phoneEegStatus.style.color = "var(--amber-light)";
+    }
   } else if (state === "seizure") {
     card.classList.add("alert-seizure");
     card.classList.remove("alert-warning");
     card.querySelector(".phone-alert-title").textContent = "🚨 CRITICAL EMERGENCY";
-    card.querySelector(".phone-alert-body").textContent = "ACTIVE SEIZURE DETECTED. Immediate medical response required. Risk index: 96%.";
-    watchStatus.textContent = "EMERGENCY";
+    card.querySelector(".phone-alert-body").textContent = `ACTIVE SEIZURE DETECTED (Risk: ${currentIcuRisk}%). Immediate medical response & caregiver alert dispatched.`;
+    watchStatus.textContent = "EMERGENCY DISPATCHED";
     watchStatus.style.color = "var(--coral-light)";
+    if (phoneEegStatus) {
+      phoneEegStatus.textContent = "CRITICAL SEIZURE";
+      phoneEegStatus.style.color = "var(--coral-light)";
+    }
   }
+}
+
+// Live mini-EEG waveform on phone screen
+const phoneEegCanvas = document.getElementById("phoneMiniEegCanvas");
+if (phoneEegCanvas) {
+  const pCtx = phoneEegCanvas.getContext("2d");
+  let phonePoints = [];
+  const maxPhonePoints = 80;
+  let pTime = 0;
+
+  function resizePhoneCanvas() {
+    const rect = phoneEegCanvas.getBoundingClientRect();
+    if (rect.width > 0) {
+      phoneEegCanvas.width = rect.width;
+      phoneEegCanvas.height = rect.height || 45;
+    }
+  }
+  window.addEventListener("resize", resizePhoneCanvas);
+  setTimeout(resizePhoneCanvas, 200);
+
+  function tickPhoneEEG() {
+    pTime += 0.08;
+    let signal = 0;
+    if (currentIcuState === "calm") {
+      signal = Math.sin(pTime * 2.2) * 5 + Math.sin(pTime * 4.5) * 2.5;
+    } else if (currentIcuState === "warning") {
+      signal = Math.sin(pTime * 6.5) * 11 + Math.sin(pTime * 12) * 6;
+    } else {
+      signal = (Math.random() - 0.5) * 28 + Math.sin(pTime * 18) * 14;
+    }
+
+    phonePoints.push(signal);
+    if (phonePoints.length > maxPhonePoints) phonePoints.shift();
+
+    if (phoneEegCanvas.width > 0 && phoneEegCanvas.height > 0) {
+      pCtx.clearRect(0, 0, phoneEegCanvas.width, phoneEegCanvas.height);
+      const midY = phoneEegCanvas.height / 2;
+      const step = phoneEegCanvas.width / (maxPhonePoints - 1);
+
+      pCtx.beginPath();
+      pCtx.lineWidth = 1.8;
+      pCtx.strokeStyle = currentIcuState === "calm" ? "#14B8A6" : (currentIcuState === "warning" ? "#F59E0B" : "#F43F5E");
+
+      for (let i = 0; i < phonePoints.length; i++) {
+        const x = i * step;
+        const y = Math.max(2, Math.min(phoneEegCanvas.height - 2, midY + phonePoints[i]));
+        if (i === 0) pCtx.moveTo(x, y);
+        else pCtx.lineTo(x, y);
+      }
+      pCtx.stroke();
+    }
+
+    requestAnimationFrame(tickPhoneEEG);
+  }
+  requestAnimationFrame(tickPhoneEEG);
 }
 
 // ============================================================
@@ -599,8 +678,8 @@ if (drawCanvas) {
   drawCanvas.addEventListener("mouseup", stopDrawing);
   drawCanvas.addEventListener("mouseleave", stopDrawing);
 
-  drawCanvas.addEventListener("touchstart", startDrawing);
-  drawCanvas.addEventListener("touchmove", drawMove);
+  drawCanvas.addEventListener("touchstart", startDrawing, { passive: false });
+  drawCanvas.addEventListener("touchmove", drawMove, { passive: false });
   drawCanvas.addEventListener("touchend", stopDrawing);
 }
 

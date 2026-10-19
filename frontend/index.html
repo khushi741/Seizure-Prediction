@@ -1554,6 +1554,12 @@
     }
   }
 
+  .mode-short { display: none; }
+  @media (max-width: 640px) {
+    .mode-full { display: none; }
+    .mode-short { display: inline; }
+  }
+
   @media (max-width: 420px) {
     .pipeline-btn {
       font-size: 0.66rem;
@@ -1578,10 +1584,12 @@
     </a>
     <div class="pipeline-selector">
       <button class="pipeline-btn active" id="btnAsTrained" onclick="setPipelineMode('as_trained')">
-        As Trained Mode (98.8% Accuracy)
+        <span class="mode-full">As Trained Mode (98.8% Accuracy)</span>
+        <span class="mode-short">As Trained (98.8%)</span>
       </button>
       <button class="pipeline-btn leakage-btn" id="btnCorrected" onclick="setPipelineMode('leakage_corrected')">
-        Leakage-Corrected Mode
+        <span class="mode-full">Leakage-Corrected Mode</span>
+        <span class="mode-short">Leakage-Corrected</span>
       </button>
     </div>
   </header>
@@ -1808,12 +1816,20 @@
         
         <!-- PANEL C: Wearable Early Warning Simulator -->
         <div class="sim-tab-panel" id="panel-wearable">
-          <div class="wearable-container" style="display:flex; gap:4rem; align-items:center; justify-content:center; flex-wrap:wrap;">
+          <!-- Interactive Simulator Trigger Toolbar -->
+          <div class="phone-test-controls" style="display:flex; gap:0.75rem; justify-content:center; align-items:center; flex-wrap:wrap; margin-bottom:2rem; padding:0.9rem 1.25rem; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:14px;">
+            <span style="font-size:0.85rem; color:var(--text-dim); font-weight:600;">Simulate Phone Alert:</span>
+            <button class="state-btn active-calm" onclick="setIcuRisk(5)" style="padding:0.45rem 1rem; font-size:0.8rem; border-radius:8px;">Normal (5%)</button>
+            <button class="state-btn active-warning" onclick="setIcuRisk(55)" style="padding:0.45rem 1rem; font-size:0.8rem; border-radius:8px;">Pre-Ictal Warning (55%)</button>
+            <button class="state-btn active-seizure" onclick="setIcuRisk(95)" style="padding:0.45rem 1rem; font-size:0.8rem; border-radius:8px;">Critical Seizure (95%)</button>
+          </div>
+
+          <div class="wearable-container" style="display:flex; gap:3rem; align-items:center; justify-content:center; flex-wrap:wrap;">
             <div class="mock-phone">
               <div class="mock-phone-camera"></div>
               <div class="mock-phone-screen">
                 <div class="phone-header">
-                  <span>11:24 PM</span>
+                  <span id="phoneTime">11:24 PM</span>
                   <span style="display:flex; gap:0.3rem;">📶 🔋</span>
                 </div>
                 
@@ -1821,11 +1837,20 @@
                   <div class="phone-alert-card alert-active" id="phoneNotification">
                     <div class="phone-alert-header">
                       <span>NeuralSync Alert</span>
-                      <span>Just Now</span>
+                      <span id="phoneAlertTime">Just Now</span>
                     </div>
                     <div class="phone-alert-title">Normal Status</div>
                     <div class="phone-alert-body">Neural synchronization parameters are within baseline limits. Risk index: 5%.</div>
                   </div>
+                </div>
+
+                <!-- Mini EEG waveform on phone screen -->
+                <div style="background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:0.6rem; margin:0.75rem 0;">
+                  <div style="display:flex; justify-content:space-between; font-size:0.68rem; color:rgba(255,255,255,0.45); font-family:'Fira Code', monospace; margin-bottom:0.25rem;">
+                    <span>LIVE EEG STREAM</span>
+                    <span id="phoneEegStatus" style="color:var(--teal-light); font-weight:700;">STABLE</span>
+                  </div>
+                  <canvas id="phoneMiniEegCanvas" style="width:100%; height:45px; display:block;"></canvas>
                 </div>
                 
                 <div class="phone-watch-widget">
@@ -1835,9 +1860,9 @@
               </div>
             </div>
             
-            <div style="display:flex; flex-direction:column; gap:1.5rem; align-items:center;">
+            <div style="display:flex; flex-direction:column; gap:1.25rem; align-items:center; max-width:100%;">
               <h4 style="font-family:'Fira Code'; font-size:0.85rem; color:var(--coral-light); margin-bottom:-0.50rem;">SMARTWATCH COMPANION ALERT</h4>
-              <img src="smartwatch_alert.png" alt="Smartwatch Companion Mockup Alert" style="width:300px; height:auto; border-radius:24px; border:1px solid var(--border); box-shadow:0 25px 50px rgba(0,0,0,0.6);">
+              <img src="smartwatch_alert.png" alt="Smartwatch Companion Mockup Alert" style="width:100%; max-width:280px; height:auto; border-radius:24px; border:1px solid var(--border); box-shadow:0 25px 50px rgba(0,0,0,0.6);">
             </div>
           </div>
         </div>
