@@ -1,6 +1,7 @@
-"""
+﻿"""
 FastAPI backend for the seizure prediction real-world showcase.
 Serves both As Trained and Leakage-corrected model branches and fusion models.
+Optimized for high-throughput, low-latency inference on CPU.
 """
 import json
 import os
@@ -55,11 +56,18 @@ for mode in available_modes:
             with open(mode_dir / "metrics.json") as f:
                 metrics = json.load(f)
                 
+            # Pre-compile feature extractors once at startup
             sbm_feat_extractor = tf.keras.models.Model(
                 inputs=sync_model.input, outputs=sync_model.get_layer("sbm_dense").output
             )
             mstm_feat_extractor = tf.keras.models.Model(
                 inputs=tcn_mstm_model.input, outputs=tcn_mstm_model.get_layer("mstm_dense").output
+            )
+            
+            # Pre-compile Grad-CAM model once at startup to avoid rebuilding graph on each request
+            grad_model = tf.keras.models.Model(
+                inputs=fusion_model.inputs,
+                outputs=[fusion_model.get_layer("conv1d_sbm").output, fusion_model.output]
             )
             
             pipelines[mode] = {
@@ -71,9 +79,33 @@ for mode in available_modes:
                 "feature_columns": feature_columns,
                 "metrics": metrics,
                 "sbm_feat_extractor": sbm_feat_extractor,
-                "mstm_feat_extractor": mstm_feat_extractor
+                "mstm_feat_extractor": mstm_feat_extractor,
+                "grad_model": grad_model
             }
-            print(f"Successfully loaded {mode} pipeline.")
+            
+            # Warm up execution graphs to eliminate first-request latency
+            try:
+                dummy_x = tf.zeros((1, len(feature_columns), 1), dtype=tf.float32)
+                dummy_sbm = sbm_feat_extractor(dummy_x, training=False)
+                dummy_mstm = mstm_feat_extractor(dummy_x, training=False)
+                _ = fusion_model([dummy_sbm, dummy_mstm], training=False)
+                
+                with tf.GradientTape() as tape:
+                    co, pr = grad_model([dummy_sbm, dummy_mstm], training=False)
+                    loss = pr[:, 0]
+                _ = tape.gradient(loss, co)
+                
+                with tf.GradientTape() as tape:
+                    tape.watch(dummy_x)
+                    s = sbm_feat_extractor(dummy_x, training=False)
+                    m = mstm_feat_extractor(dummy_x, training=False)
+                    p = fusion_model([s, m], training=False)
+                    loss = p[:, 0]
+                _ = tape.gradient(loss, dummy_x)
+            except Exception as warm_err:
+                pass
+                
+            print(f"Successfully loaded and warmed up {mode} pipeline.")
         except Exception as e:
             print(f"Error loading {mode} pipeline: {e}")
 
@@ -88,63 +120,44 @@ class PredictRequest(BaseModel):
     mode: str = "as_trained"
     features: Dict[str, float]
 
-def compute_gradcam_1d(fusion_model, sbm_features, mstm_features, class_index: int) -> List[float]:
+def compute_gradcam_1d(grad_model, sbm_tensor, mstm_tensor, class_index: int) -> List[float]:
     """
     Computes 1D Grad-CAM over the conv1d_sbm layer in the Fusion model.
+    Optimized: Reuses pre-compiled grad_model and uses vectorized channel broadcasting.
     """
-    # Create gradient model
-    grad_model = tf.keras.models.Model(
-        inputs=fusion_model.inputs,
-        outputs=[fusion_model.get_layer("conv1d_sbm").output, fusion_model.output]
-    )
-    
-    sbm_tensor = tf.convert_to_tensor(sbm_features, dtype=tf.float32)
-    mstm_tensor = tf.convert_to_tensor(mstm_features, dtype=tf.float32)
-    
     with tf.GradientTape() as tape:
-        conv_outputs, predictions = grad_model([sbm_tensor, mstm_tensor])
+        conv_outputs, predictions = grad_model([sbm_tensor, mstm_tensor], training=False)
         loss = predictions[:, class_index]
         
     grads = tape.gradient(loss, conv_outputs)[0]
-    pooled_grads = tf.reduce_mean(grads, axis=0)
-    conv_outputs = conv_outputs[0].numpy()
+    pooled_grads = tf.reduce_mean(grads, axis=0) # Shape: (channels,)
     
-    for i in range(conv_outputs.shape[-1]):
-        conv_outputs[:, i] *= pooled_grads[i].numpy()
-        
-    heatmap = np.mean(conv_outputs, axis=-1)
-    heatmap = np.maximum(heatmap, 0)
+    # Vectorized channel-wise weighting (avoids Python for-loop)
+    conv_outputs_np = conv_outputs[0].numpy() * pooled_grads.numpy()
+    
+    heatmap = np.mean(conv_outputs_np, axis=-1)
+    heatmap = np.maximum(heatmap, 0.0)
     max_val = np.max(heatmap)
-    if max_val != 0:
+    if max_val > 0:
         heatmap /= max_val
     return heatmap.tolist()
 
-def compute_feature_gradients(sync_model, tcn_mstm_model, fusion_model, x_scaled, class_index: int) -> List[float]:
+def compute_feature_gradients(sbm_feat_extractor, mstm_feat_extractor, fusion_model, x_tensor, class_index: int) -> List[float]:
     """
     Computes direct input gradients of the target class prediction w.r.t the scaled input features.
-    This provides a direct attribution of input feature importance.
+    Optimized: Reuses pre-compiled feature extractors without rebuilding Keras Model graphs on each call.
     """
-    x_tensor = tf.convert_to_tensor(x_scaled, dtype=tf.float32)
-    
     with tf.GradientTape() as tape:
         tape.watch(x_tensor)
-        # Recreate forward pass through the entire pipeline
-        sbm_dense = sync_model.get_layer("sbm_dense").output
-        sbm_fe_model = tf.keras.models.Model(inputs=sync_model.input, outputs=sbm_dense)
-        
-        mstm_dense = tcn_mstm_model.get_layer("mstm_dense").output
-        mstm_fe_model = tf.keras.models.Model(inputs=tcn_mstm_model.input, outputs=mstm_dense)
-        
-        sbm_feats = sbm_fe_model(x_tensor)
-        mstm_feats = mstm_fe_model(x_tensor)
-        
-        probs = fusion_model([sbm_feats, mstm_feats])
+        sbm_feats = sbm_feat_extractor(x_tensor, training=False)
+        mstm_feats = mstm_feat_extractor(x_tensor, training=False)
+        probs = fusion_model([sbm_feats, mstm_feats], training=False)
         loss = probs[:, class_index]
         
     grads = tape.gradient(loss, x_tensor)
     importance = tf.abs(grads)[0, :, 0].numpy()
     max_val = np.max(importance)
-    if max_val != 0:
+    if max_val > 0:
         importance /= max_val
     return importance.tolist()
 
@@ -194,33 +207,34 @@ def predict(req: PredictRequest):
     sbm_feat_extractor = pipe["sbm_feat_extractor"]
     mstm_feat_extractor = pipe["mstm_feat_extractor"]
     fusion_model = pipe["fusion_model"]
-    sync_model = pipe["sync_model"]
-    tcn_mstm_model = pipe["tcn_mstm_model"]
+    grad_model = pipe["grad_model"]
     
-    # Extract values in correct feature column order
-    missing = [c for c in feature_columns if c not in req.features]
-    if missing:
+    # Fast feature extraction in expected column order
+    features_dict = req.features
+    try:
+        row = np.array([[features_dict[c] for c in feature_columns]], dtype=np.float32)
+    except KeyError:
+        missing = [c for c in feature_columns if c not in features_dict]
         raise HTTPException(status_code=422, detail=f"Missing features: {missing}")
         
-    row = np.array([[req.features[c] for c in feature_columns]], dtype="float32")
     scaled = scaler.transform(row)
     x_scaled = np.expand_dims(scaled, axis=-1)  # (1, F, 1)
+    x_tensor = tf.convert_to_tensor(x_scaled, dtype=tf.float32)
     
-    # Feature extraction
-    sbm_features = sbm_feat_extractor.predict(x_scaled, verbose=0)
-    mstm_features = mstm_feat_extractor.predict(x_scaled, verbose=0)
-    
-    # Fusion prediction
-    probs = fusion_model.predict([sbm_features, mstm_features], verbose=0)[0]
+    # Direct fast tensor inference (avoids slow model.predict() batching overhead)
+    sbm_features = sbm_feat_extractor(x_tensor, training=False)
+    mstm_features = mstm_feat_extractor(x_tensor, training=False)
+    probs_tensor = fusion_model([sbm_features, mstm_features], training=False)[0]
+    probs = probs_tensor.numpy()
     
     classes = label_encoder.classes_.tolist()
     prob_dict = {cls: float(p) for cls, p in zip(classes, probs)}
     class_idx = int(np.argmax(probs))
     predicted_class = classes[class_idx]
     
-    # Compute explainability weights
-    gradcam_weights = compute_gradcam_1d(fusion_model, sbm_features, mstm_features, class_idx)
-    feature_importance = compute_feature_gradients(sync_model, tcn_mstm_model, fusion_model, x_scaled, class_idx)
+    # Fast explainability weights (reusing pre-compiled models and vectorized operations)
+    gradcam_weights = compute_gradcam_1d(grad_model, sbm_features, mstm_features, class_idx)
+    feature_importance = compute_feature_gradients(sbm_feat_extractor, mstm_feat_extractor, fusion_model, x_tensor, class_idx)
     
     # Map feature importance back to column names
     feature_importance_dict = {col: float(imp) for col, imp in zip(feature_columns, feature_importance)}
