@@ -13,7 +13,7 @@ services:
     autoDeploy: true
     envVars:
       - key: PORT
-        value: 8000
+        value: 10000
 
   # ==============================================================
   # 2. Interactive Frontend Showcase (Static Site on Global CDN)

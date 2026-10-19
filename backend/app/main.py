@@ -1,4 +1,4 @@
-﻿"""
+"""
 FastAPI backend for the seizure prediction real-world showcase.
 Serves both As Trained and Leakage-corrected model branches and fusion models.
 Memory-Optimized for Cloud Deployment (Render 512MB RAM free tier).
@@ -38,6 +38,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.on_event("startup")
+def on_startup():
+    port = os.environ.get("PORT", "10000")
+    print(f"INFO: Seizure Prediction API initialized successfully, listening on port {port}")
 
 # ----------------------------------------------------------------------
 # Lazy-Loaded Model Pipelines (Keeps Startup RAM < 60MB on 512MB Render tier)
