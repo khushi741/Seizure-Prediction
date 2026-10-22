@@ -1,0 +1,992 @@
+{
+  "dataset_summary": {
+    "total_samples": 11138,
+    "num_patients": 1950,
+    "classes": [
+      "GPD",
+      "GRDA",
+      "LPD",
+      "LRDA",
+      "Other",
+      "Seizure"
+    ],
+    "class_distribution": {
+      "Other": 4699,
+      "Seizure": 2045,
+      "GRDA": 1422,
+      "LPD": 1284,
+      "GPD": 1025,
+      "LRDA": 663
+    }
+  },
+  "random_split_evaluation": {
+    "note": "Replicates original random split (contains patient overlap across train/test)",
+    "num_train": 8910,
+    "num_test": 2228,
+    "patient_overlap_count": 879,
+    "majority_baseline": {
+      "accuracy": 0.42190305206463197,
+      "balanced_accuracy": 0.16666666666666666,
+      "macro_f1": 0.0989057239057239,
+      "weighted_f1": 0.25037176069492045,
+      "per_class": {
+        "GPD": {
+          "recall": 0.0,
+          "precision": 0.0,
+          "f1": 0.0,
+          "support": 205
+        },
+        "GRDA": {
+          "recall": 0.0,
+          "precision": 0.0,
+          "f1": 0.0,
+          "support": 284
+        },
+        "LPD": {
+          "recall": 0.0,
+          "precision": 0.0,
+          "f1": 0.0,
+          "support": 257
+        },
+        "LRDA": {
+          "recall": 0.0,
+          "precision": 0.0,
+          "f1": 0.0,
+          "support": 133
+        },
+        "Other": {
+          "recall": 1.0,
+          "precision": 0.42190305206463197,
+          "f1": 0.5934343434343434,
+          "support": 940
+        },
+        "Seizure": {
+          "recall": 0.0,
+          "precision": 0.0,
+          "f1": 0.0,
+          "support": 409
+        }
+      },
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          0,
+          205,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          284,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          257,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          133,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          940,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          409,
+          0
+        ]
+      ],
+      "classification_report": {
+        "GPD": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 205.0
+        },
+        "GRDA": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 284.0
+        },
+        "LPD": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 257.0
+        },
+        "LRDA": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 133.0
+        },
+        "Other": {
+          "precision": 0.42190305206463197,
+          "recall": 1.0,
+          "f1-score": 0.5934343434343434,
+          "support": 940.0
+        },
+        "Seizure": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 409.0
+        },
+        "accuracy": 0.42190305206463197,
+        "macro avg": {
+          "precision": 0.07031717534410532,
+          "recall": 0.16666666666666666,
+          "f1-score": 0.0989057239057239,
+          "support": 2228.0
+        },
+        "weighted avg": {
+          "precision": 0.17800218534145154,
+          "recall": 0.42190305206463197,
+          "f1-score": 0.25037176069492045,
+          "support": 2228.0
+        }
+      }
+    },
+    "logistic_regression": {
+      "accuracy": 0.42190305206463197,
+      "balanced_accuracy": 0.16666666666666666,
+      "macro_f1": 0.0989057239057239,
+      "weighted_f1": 0.25037176069492045,
+      "per_class": {
+        "GPD": {
+          "recall": 0.0,
+          "precision": 0.0,
+          "f1": 0.0,
+          "support": 205
+        },
+        "GRDA": {
+          "recall": 0.0,
+          "precision": 0.0,
+          "f1": 0.0,
+          "support": 284
+        },
+        "LPD": {
+          "recall": 0.0,
+          "precision": 0.0,
+          "f1": 0.0,
+          "support": 257
+        },
+        "LRDA": {
+          "recall": 0.0,
+          "precision": 0.0,
+          "f1": 0.0,
+          "support": 133
+        },
+        "Other": {
+          "recall": 1.0,
+          "precision": 0.42190305206463197,
+          "f1": 0.5934343434343434,
+          "support": 940
+        },
+        "Seizure": {
+          "recall": 0.0,
+          "precision": 0.0,
+          "f1": 0.0,
+          "support": 409
+        }
+      },
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          0,
+          205,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          284,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          257,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          133,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          940,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          409,
+          0
+        ]
+      ],
+      "classification_report": {
+        "GPD": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 205.0
+        },
+        "GRDA": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 284.0
+        },
+        "LPD": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 257.0
+        },
+        "LRDA": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 133.0
+        },
+        "Other": {
+          "precision": 0.42190305206463197,
+          "recall": 1.0,
+          "f1-score": 0.5934343434343434,
+          "support": 940.0
+        },
+        "Seizure": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 409.0
+        },
+        "accuracy": 0.42190305206463197,
+        "macro avg": {
+          "precision": 0.07031717534410532,
+          "recall": 0.16666666666666666,
+          "f1-score": 0.0989057239057239,
+          "support": 2228.0
+        },
+        "weighted avg": {
+          "precision": 0.17800218534145154,
+          "recall": 0.42190305206463197,
+          "f1-score": 0.25037176069492045,
+          "support": 2228.0
+        }
+      }
+    },
+    "leakage_corrected_deep_model": {
+      "mstm_accuracy": 0.42190305206463197,
+      "sbam_accuracy": 0.4236983842010772,
+      "fusion_accuracy": 0.42190305206463197,
+      "classes": [
+        "GPD",
+        "GRDA",
+        "LPD",
+        "LRDA",
+        "Other",
+        "Seizure"
+      ],
+      "classification_report": {
+        "GPD": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 205.0
+        },
+        "GRDA": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 284.0
+        },
+        "LPD": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 257.0
+        },
+        "LRDA": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 133.0
+        },
+        "Other": {
+          "precision": 0.42190305206463197,
+          "recall": 1.0,
+          "f1-score": 0.5934343434343434,
+          "support": 940.0
+        },
+        "Seizure": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 409.0
+        },
+        "accuracy": 0.42190305206463197,
+        "macro avg": {
+          "precision": 0.07031717534410532,
+          "recall": 0.16666666666666666,
+          "f1-score": 0.0989057239057239,
+          "support": 2228.0
+        },
+        "weighted avg": {
+          "precision": 0.17800218534145154,
+          "recall": 0.42190305206463197,
+          "f1-score": 0.25037176069492045,
+          "support": 2228.0
+        }
+      },
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          0,
+          205,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          284,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          257,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          133,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          940,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          409,
+          0
+        ]
+      ],
+      "num_train": 8910,
+      "num_test": 2228
+    },
+    "as_trained_leaking_model": {
+      "mstm_accuracy": 0.9178635547576302,
+      "sbam_accuracy": 0.9887791741472173,
+      "fusion_accuracy": 0.9932675044883303,
+      "classes": [
+        "GPD",
+        "GRDA",
+        "LPD",
+        "LRDA",
+        "Other",
+        "Seizure"
+      ],
+      "classification_report": {
+        "GPD": {
+          "precision": 0.9902912621359223,
+          "recall": 0.9951219512195122,
+          "f1-score": 0.9927007299270073,
+          "support": 205.0
+        },
+        "GRDA": {
+          "precision": 0.9860627177700348,
+          "recall": 0.9964788732394366,
+          "f1-score": 0.9912434325744308,
+          "support": 284.0
+        },
+        "LPD": {
+          "precision": 0.9807692307692307,
+          "recall": 0.9922178988326849,
+          "f1-score": 0.9864603481624759,
+          "support": 257.0
+        },
+        "LRDA": {
+          "precision": 1.0,
+          "recall": 0.9924812030075187,
+          "f1-score": 0.9962264150943396,
+          "support": 133.0
+        },
+        "Other": {
+          "precision": 0.9978586723768736,
+          "recall": 0.9914893617021276,
+          "f1-score": 0.9946638207043756,
+          "support": 940.0
+        },
+        "Seizure": {
+          "precision": 0.9951100244498777,
+          "recall": 0.9951100244498777,
+          "f1-score": 0.9951100244498777,
+          "support": 409.0
+        },
+        "accuracy": 0.9932675044883303,
+        "macro avg": {
+          "precision": 0.9916819845836566,
+          "recall": 0.9938165520751929,
+          "f1-score": 0.9927341284854179,
+          "support": 2228.0
+        },
+        "weighted avg": {
+          "precision": 0.9933107562506767,
+          "recall": 0.9932675044883303,
+          "f1-score": 0.9932761214692959,
+          "support": 2228.0
+        }
+      },
+      "confusion_matrix": [
+        [
+          204,
+          0,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          283,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          255,
+          0,
+          1,
+          1
+        ],
+        [
+          0,
+          0,
+          1,
+          132,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          2,
+          0,
+          932,
+          1
+        ],
+        [
+          1,
+          0,
+          0,
+          0,
+          1,
+          407
+        ]
+      ],
+      "num_train": 8910,
+      "num_test": 2228
+    }
+  },
+  "patient_grouped_split_evaluation": {
+    "note": "Zero patient overlap between train and test (GroupShuffleSplit on patient_id)",
+    "num_train": 8978,
+    "num_test": 2160,
+    "num_train_patients": 1560,
+    "num_test_patients": 390,
+    "majority_baseline": {
+      "accuracy": 0.3731481481481482,
+      "balanced_accuracy": 0.16666666666666666,
+      "macro_f1": 0.09058215329287479,
+      "weighted_f1": 0.20280337653904748,
+      "per_class": {
+        "GPD": {
+          "recall": 0.0,
+          "precision": 0.0,
+          "f1": 0.0,
+          "support": 224
+        },
+        "GRDA": {
+          "recall": 0.0,
+          "precision": 0.0,
+          "f1": 0.0,
+          "support": 276
+        },
+        "LPD": {
+          "recall": 0.0,
+          "precision": 0.0,
+          "f1": 0.0,
+          "support": 300
+        },
+        "LRDA": {
+          "recall": 0.0,
+          "precision": 0.0,
+          "f1": 0.0,
+          "support": 134
+        },
+        "Other": {
+          "recall": 1.0,
+          "precision": 0.3731481481481482,
+          "f1": 0.5434929197572488,
+          "support": 806
+        },
+        "Seizure": {
+          "recall": 0.0,
+          "precision": 0.0,
+          "f1": 0.0,
+          "support": 420
+        }
+      },
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          0,
+          224,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          276,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          300,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          134,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          806,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          420,
+          0
+        ]
+      ],
+      "classification_report": {
+        "GPD": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 224.0
+        },
+        "GRDA": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 276.0
+        },
+        "LPD": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 300.0
+        },
+        "LRDA": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 134.0
+        },
+        "Other": {
+          "precision": 0.3731481481481482,
+          "recall": 1.0,
+          "f1-score": 0.5434929197572488,
+          "support": 806.0
+        },
+        "Seizure": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 420.0
+        },
+        "accuracy": 0.3731481481481482,
+        "macro avg": {
+          "precision": 0.06219135802469136,
+          "recall": 0.16666666666666666,
+          "f1-score": 0.09058215329287479,
+          "support": 2160.0
+        },
+        "weighted avg": {
+          "precision": 0.1392395404663923,
+          "recall": 0.3731481481481482,
+          "f1-score": 0.20280337653904748,
+          "support": 2160.0
+        }
+      }
+    },
+    "logistic_regression": {
+      "accuracy": 0.3731481481481482,
+      "balanced_accuracy": 0.16666666666666666,
+      "macro_f1": 0.09058215329287479,
+      "weighted_f1": 0.20280337653904748,
+      "per_class": {
+        "GPD": {
+          "recall": 0.0,
+          "precision": 0.0,
+          "f1": 0.0,
+          "support": 224
+        },
+        "GRDA": {
+          "recall": 0.0,
+          "precision": 0.0,
+          "f1": 0.0,
+          "support": 276
+        },
+        "LPD": {
+          "recall": 0.0,
+          "precision": 0.0,
+          "f1": 0.0,
+          "support": 300
+        },
+        "LRDA": {
+          "recall": 0.0,
+          "precision": 0.0,
+          "f1": 0.0,
+          "support": 134
+        },
+        "Other": {
+          "recall": 1.0,
+          "precision": 0.3731481481481482,
+          "f1": 0.5434929197572488,
+          "support": 806
+        },
+        "Seizure": {
+          "recall": 0.0,
+          "precision": 0.0,
+          "f1": 0.0,
+          "support": 420
+        }
+      },
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          0,
+          224,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          276,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          300,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          134,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          806,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          420,
+          0
+        ]
+      ],
+      "classification_report": {
+        "GPD": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 224.0
+        },
+        "GRDA": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 276.0
+        },
+        "LPD": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 300.0
+        },
+        "LRDA": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 134.0
+        },
+        "Other": {
+          "precision": 0.3731481481481482,
+          "recall": 1.0,
+          "f1-score": 0.5434929197572488,
+          "support": 806.0
+        },
+        "Seizure": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 420.0
+        },
+        "accuracy": 0.3731481481481482,
+        "macro avg": {
+          "precision": 0.06219135802469136,
+          "recall": 0.16666666666666666,
+          "f1-score": 0.09058215329287479,
+          "support": 2160.0
+        },
+        "weighted avg": {
+          "precision": 0.1392395404663923,
+          "recall": 0.3731481481481482,
+          "f1-score": 0.20280337653904748,
+          "support": 2160.0
+        }
+      }
+    },
+    "random_forest": {
+      "accuracy": 0.36018518518518516,
+      "balanced_accuracy": 0.16353848786790584,
+      "macro_f1": 0.09822898487812283,
+      "weighted_f1": 0.20934476010510825,
+      "per_class": {
+        "GPD": {
+          "recall": 0.004464285714285714,
+          "precision": 0.5,
+          "f1": 0.008849557522123894,
+          "support": 224
+        },
+        "GRDA": {
+          "recall": 0.007246376811594203,
+          "precision": 0.034482758620689655,
+          "f1": 0.011976047904191617,
+          "support": 276
+        },
+        "LPD": {
+          "recall": 0.0,
+          "precision": 0.0,
+          "f1": 0.0,
+          "support": 300
+        },
+        "LRDA": {
+          "recall": 0.0,
+          "precision": 0.0,
+          "f1": 0.0,
+          "support": 134
+        },
+        "Other": {
+          "recall": 0.9528535980148883,
+          "precision": 0.37591776798825255,
+          "f1": 0.5391365391365391,
+          "support": 806
+        },
+        "Seizure": {
+          "recall": 0.016666666666666666,
+          "precision": 0.125,
+          "f1": 0.029411764705882353,
+          "support": 420
+        }
+      },
+      "confusion_matrix": [
+        [
+          1,
+          10,
+          1,
+          0,
+          199,
+          13
+        ],
+        [
+          0,
+          2,
+          0,
+          0,
+          260,
+          14
+        ],
+        [
+          0,
+          13,
+          0,
+          0,
+          284,
+          3
+        ],
+        [
+          0,
+          1,
+          0,
+          0,
+          131,
+          2
+        ],
+        [
+          1,
+          20,
+          0,
+          0,
+          768,
+          17
+        ],
+        [
+          0,
+          12,
+          0,
+          0,
+          401,
+          7
+        ]
+      ],
+      "classification_report": {
+        "GPD": {
+          "precision": 0.5,
+          "recall": 0.004464285714285714,
+          "f1-score": 0.008849557522123894,
+          "support": 224.0
+        },
+        "GRDA": {
+          "precision": 0.034482758620689655,
+          "recall": 0.007246376811594203,
+          "f1-score": 0.011976047904191617,
+          "support": 276.0
+        },
+        "LPD": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 300.0
+        },
+        "LRDA": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 134.0
+        },
+        "Other": {
+          "precision": 0.37591776798825255,
+          "recall": 0.9528535980148883,
+          "f1-score": 0.5391365391365391,
+          "support": 806.0
+        },
+        "Seizure": {
+          "precision": 0.125,
+          "recall": 0.016666666666666666,
+          "f1-score": 0.029411764705882353,
+          "support": 420.0
+        },
+        "accuracy": 0.36018518518518516,
+        "macro avg": {
+          "precision": 0.1725667544348237,
+          "recall": 0.16353848786790584,
+          "f1-score": 0.09822898487812283,
+          "support": 2160.0
+        },
+        "weighted avg": {
+          "precision": 0.22083655665640828,
+          "recall": 0.36018518518518516,
+          "f1-score": 0.20934476010510825,
+          "support": 2160.0
+        }
+      }
+    }
+  }
+}

@@ -1573,9 +1573,21 @@
 </head>
 <body>
 
+  <!-- REGULATORY MEDICAL DISCLAIMER BANNER -->
+  <div id="medical-disclaimer-banner" style="background: linear-gradient(90deg, #7f1d1d, #991b1b); color: #fef2f2; padding: 0.75rem 1.25rem; font-size: 0.82rem; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.2); font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 0.6rem; z-index: 1000; position: relative;">
+    <span style="font-size: 1.15rem;">⚠️</span>
+    <span><strong>NOT A MEDICAL DEVICE:</strong> This application is strictly an educational research prototype. It is NOT FDA/CE certified or approved, and MUST NOT be used for clinical diagnosis, patient monitoring, treatment decisions, or real-time medical alerting.</span>
+  </div>
+
   <!-- Background Particle Animation -->
   <canvas id="bg-canvas"></canvas>
   <div class="grid-overlay"></div>
+
+  <!-- COLD START NOTIFICATION BANNER -->
+  <div id="cold-start-banner" style="display: none; background: rgba(15, 23, 42, 0.95); border: 1px solid var(--amber); color: var(--amber-light); padding: 0.75rem 1.5rem; border-radius: 10px; margin: 1rem auto 0; max-width: 960px; font-size: 0.85rem; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 999; position: relative;">
+    <span style="font-weight: 700; margin-right: 0.5rem;">⚡ Free-Tier Server Cold Start:</span>
+    The cloud backend is waking up from free-tier standby (~30–45s). Showing verified locally cached baselines and model metrics in the meantime.
+  </div>
 
   <!-- HEADER / MODE SWITCHER -->
   <header>
@@ -1583,32 +1595,67 @@
       <span>Neural</span>Sync.ai
     </a>
     <div class="pipeline-selector">
-      <button class="pipeline-btn active" id="btnAsTrained" onclick="setPipelineMode('as_trained')">
-        <span class="mode-full">As Trained Mode (98.8% Accuracy)</span>
-        <span class="mode-short">As Trained (98.8%)</span>
+      <button class="pipeline-btn leakage-btn active" id="btnCorrected" onclick="setPipelineMode('leakage_corrected')">
+        <span class="mode-full">Leakage-Corrected Mode (Honest Default)</span>
+        <span class="mode-short">Honest Mode (Default)</span>
       </button>
-      <button class="pipeline-btn leakage-btn" id="btnCorrected" onclick="setPipelineMode('leakage_corrected')">
-        <span class="mode-full">Leakage-Corrected Mode</span>
-        <span class="mode-short">Leakage-Corrected</span>
+      <button class="pipeline-btn" id="btnAsTrained" onclick="setPipelineMode('as_trained')">
+        <span class="mode-full">Leakage Demo (98.8% Artifact)</span>
+        <span class="mode-short">Leakage Demo (98.8%)</span>
       </button>
     </div>
   </header>
 
   <!-- HERO SECTION -->
   <section class="hero-sec">
-    <div class="badge">SBAM + MSTM Neural Architecture</div>
-    <h1>Predicting Epileptic Seizures via <em>Multi-Scale</em> Synchronization.</h1>
+    <div class="badge" style="background: rgba(20, 184, 166, 0.1); color: var(--teal-light);">Honest Clinical AI &amp; Baseline Evaluation</div>
+    <h1>Epileptic Seizure &amp; Brain Pattern Classification via <em>Multi-Scale</em> Neural Networks.</h1>
     <p class="hero-desc">
-      A dual-branch neural framework utilizing multi-head spatial attention (SBAM) and temporal dilated convolutions (MSTM) to compute pre-onset anomalies before seizure transition.
+      A dual-branch neural architecture (SBAM spatial attention + MSTM temporal dilated convolutions) benchmarked against rigorous empirical baselines, demonstrating the perils of label leakage and patient overlap.
     </p>
     <div class="cta-row">
-      <a href="#simulators" class="btn-primary">Launch Live Simulator</a>
-      <a href="#performance" class="btn-secondary">View Performance Lab</a>
+      <a href="#capabilities" class="btn-primary">View Model Capabilities &amp; Limits</a>
+      <a href="#performance" class="btn-secondary">View Performance Baselines</a>
     </div>
   </section>
 
   <main>
     
+    <!-- WHAT THIS MODEL CAN AND CAN'T DO -->
+    <section id="capabilities" style="padding: 2.5rem 0 3.5rem; border-bottom: 1px solid var(--border);">
+      <div class="section-header">
+        <div class="badge" style="background:rgba(245, 158, 11, 0.1); color:var(--amber-light); margin-bottom:0.75rem;">Model Scope &amp; Transparency</div>
+        <h2>What This Model Can &amp; Cannot Do</h2>
+        <p>A transparent clinical and engineering appraisal of the classification framework, baseline comparisons, and operational boundaries.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.75rem; margin-top: 1.5rem;">
+        <div class="glass-card" style="padding: 2rem; border-left: 4px solid var(--teal-light); background: rgba(15, 23, 42, 0.55);">
+          <h3 style="color: var(--teal-light); font-size: 1.15rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.6rem;">
+            <span style="background: rgba(20, 184, 166, 0.2); width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;">✓</span>
+            What This Model CAN Do
+          </h3>
+          <ul style="list-style: none; display: flex; flex-direction: column; gap: 1rem; font-size: 0.92rem; color: var(--text-dim); line-height: 1.6;">
+            <li>• <strong>Demonstrate Catastrophic Label Leakage:</strong> Replicates and exposes how annotator vote fractions (<span class="mono">vote_*</span>) artificially inflated test accuracy to 98.8%, serving as an educational benchmark in ML hygiene.</li>
+            <li>• <strong>Evaluate Honest Baselines:</strong> Directly evaluates alongside empirical majority-class (~37.3–42.2%) and logistic regression baselines to establish genuine empirical performance floors.</li>
+            <li>• <strong>Enforce Zero Patient Contamination:</strong> Validates across patient-isolated partitions (<span class="mono">GroupShuffleSplit</span> on patient ID) so unseen patients never contaminate the training split.</li>
+            <li>• <strong>Dual-Branch Spatio-Temporal Modeling:</strong> Demonstrates multi-head spatial self-attention (SBAM) paired with multi-scale dilated causal temporal convolutions (MSTM).</li>
+          </ul>
+        </div>
+        <div class="glass-card" style="padding: 2rem; border-left: 4px solid var(--coral-light); background: rgba(15, 23, 42, 0.55);">
+          <h3 style="color: var(--coral-light); font-size: 1.15rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.6rem;">
+            <span style="background: rgba(244, 63, 94, 0.2); width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;">✕</span>
+            What This Model CANNOT Do
+          </h3>
+          <ul style="list-style: none; display: flex; flex-direction: column; gap: 1rem; font-size: 0.92rem; color: var(--text-dim); line-height: 1.6;">
+            <li>• <strong>Cannot Forecast Seizures Minutes Ahead:</strong> This Kaggle dataset performs static 50-second pattern classification across 6 electrographic classes; it contains no continuous preictal time series for advance forecasting.</li>
+            <li>• <strong>Metadata Features Contain Zero Signal:</strong> When vote columns are removed, the remaining tabular columns (<span class="mono">eeg_id</span>, offsets, fold) contain no neurological microvolt signals, resulting in majority-class guessing.</li>
+            <li>• <strong>Cannot Replace Clinical EEG Monitoring:</strong> Standard 10-20 scalp electrode montages and certified clinical interpretation remain mandatory for diagnosis and management.</li>
+            <li>• <strong>Not a Medical Device:</strong> Must NOT be used for clinical diagnosis, patient monitoring, treatment decisions, or wearable alerting without certified clinical hardware.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
     <!-- CORE ARCHITECTURE & NEURAL DYNAMICS -->
     <section id="architecture-overview" style="padding: 2rem 0 4rem; border-bottom: 1px solid var(--border);">
       <div class="section-header">
@@ -1873,9 +1920,126 @@
     <!-- MODEL PERFORMANCE SECTION -->
     <section id="performance">
       <div class="section-header">
-        <div class="badge" style="background:rgba(20, 184, 166, 0.05); margin-bottom:0.75rem;">validation lab</div>
-        <h2>Model Performance &amp; Evaluation</h2>
-        <p>A comparative performance breakdown computed on the held-out test split, contrasting branch architectures and evaluating predictions.</p>
+        <div class="badge" style="background:rgba(20, 184, 166, 0.05); margin-bottom:0.75rem;">Honest Validation Lab</div>
+        <h2>Model Performance &amp; Baseline Benchmarks</h2>
+        <p>A rigorous comparative performance breakdown contrasting genuine baselines against neural architectures across both patient-isolated and random validation splits.</p>
+      </div>
+
+      <!-- Protocol Summary & Baseline Grid -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+        <div class="glass-card" style="padding: 1.25rem; border-left: 3px solid var(--amber);">
+          <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--amber-light); font-weight: 600; margin-bottom: 0.35rem;">Baseline Benchmark</div>
+          <div style="font-size: 1.05rem; font-weight: 700;">Majority-Class Predictor</div>
+          <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 0.75rem;">
+            <span style="font-size: 0.82rem; color: var(--text-dim);">Unseen Patient Split:</span>
+            <span style="font-size: 1.4rem; font-weight: 800; font-family: 'Fira Code'; color: var(--amber-light);" id="txtMajAcc">37.3%</span>
+          </div>
+          <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.35rem;">Always predicts most frequent class ('Other'). Sets the true baseline floor.</div>
+        </div>
+
+        <div class="glass-card" style="padding: 1.25rem; border-left: 3px solid var(--text-dim);">
+          <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); font-weight: 600; margin-bottom: 0.35rem;">Baseline Benchmark</div>
+          <div style="font-size: 1.05rem; font-weight: 700;">Logistic Regression</div>
+          <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 0.75rem;">
+            <span style="font-size: 0.82rem; color: var(--text-dim);">Unseen Patient Split:</span>
+            <span style="font-size: 1.4rem; font-weight: 800; font-family: 'Fira Code'; color: var(--text-dim);" id="txtLrAcc">37.3%</span>
+          </div>
+          <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.35rem;">Linear classifier fit strictly on train split without label leakage.</div>
+        </div>
+
+        <div class="glass-card" style="padding: 1.25rem; border-left: 3px solid var(--teal);">
+          <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--teal-light); font-weight: 600; margin-bottom: 0.35rem;">Deep Learning Model</div>
+          <div style="font-size: 1.05rem; font-weight: 700;">STFM Fusion (SBAM + MSTM)</div>
+          <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 0.75rem;">
+            <span style="font-size: 0.82rem; color: var(--text-dim);">Leakage-Corrected Split:</span>
+            <span style="font-size: 1.4rem; font-weight: 800; font-family: 'Fira Code'; color: var(--teal-light);" id="txtFusionCardAcc">42.2%</span>
+          </div>
+          <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.35rem;">Matches majority floor on metadata features; requires continuous EEG for signal.</div>
+        </div>
+      </div>
+
+      <!-- Master Paper Benchmark Table -->
+      <div class="glass-card" style="padding: 1.5rem; margin-bottom: 2.5rem; overflow-x: auto;">
+        <h3 style="font-size: 1.05rem; margin-bottom: 0.5rem;">Empirical Benchmark Table (Publication-Grade Results)</h3>
+        <p style="font-size: 0.82rem; color: var(--text-dim); margin-bottom: 1.25rem;">Comparing validation protocols: Random Split (contains 879 overlapping patients) vs. Patient-Grouped Split (zero patient overlap, 390 held-out patients).</p>
+        <table class="metrics-table" id="paperBenchmarkTable">
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>Validation Protocol</th>
+              <th>Patient Isolation</th>
+              <th>Accuracy</th>
+              <th>Balanced Acc</th>
+              <th>Macro F1</th>
+              <th>Verdict / Reality</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="class-name">Majority Baseline</td>
+              <td>Random Split (20% test)</td>
+              <td>879 Overlapping</td>
+              <td>42.19%</td>
+              <td>16.67%</td>
+              <td>0.099</td>
+              <td><span style="color:var(--text-dim);">Empirical majority floor</span></td>
+            </tr>
+            <tr>
+              <td class="class-name">Logistic Regression</td>
+              <td>Random Split (20% test)</td>
+              <td>879 Overlapping</td>
+              <td>42.19%</td>
+              <td>16.67%</td>
+              <td>0.099</td>
+              <td><span style="color:var(--text-dim);">Matches majority voting</span></td>
+            </tr>
+            <tr>
+              <td class="class-name">STFM Fusion Model</td>
+              <td>Random Split (20% test)</td>
+              <td>879 Overlapping</td>
+              <td>42.19%</td>
+              <td>16.67%</td>
+              <td>0.099</td>
+              <td><span style="color:var(--amber-light);">No signal in metadata IDs</span></td>
+            </tr>
+            <tr style="background: rgba(20, 184, 166, 0.05); font-weight: 600;">
+              <td class="class-name" style="color:var(--teal-light);">Majority Baseline</td>
+              <td>Patient-Grouped Split</td>
+              <td>Zero Overlap (390 Unseen)</td>
+              <td>37.31%</td>
+              <td>16.67%</td>
+              <td>0.091</td>
+              <td><span style="color:var(--teal-light);">True unseen patient baseline</span></td>
+            </tr>
+            <tr style="background: rgba(20, 184, 166, 0.05);">
+              <td class="class-name">Logistic Regression</td>
+              <td>Patient-Grouped Split</td>
+              <td>Zero Overlap (390 Unseen)</td>
+              <td>37.31%</td>
+              <td>16.67%</td>
+              <td>0.091</td>
+              <td><span>Matches majority floor</span></td>
+            </tr>
+            <tr style="background: rgba(20, 184, 166, 0.05);">
+              <td class="class-name">Random Forest</td>
+              <td>Patient-Grouped Split</td>
+              <td>Zero Overlap (390 Unseen)</td>
+              <td>36.02%</td>
+              <td>16.35%</td>
+              <td>0.098</td>
+              <td><span>Non-linear baseline on IDs</span></td>
+            </tr>
+            <tr style="opacity: 0.65; border-top: 1px dashed var(--border);">
+              <td class="class-name" style="color:var(--coral-light);"><em>As-Trained (Leaking Artifact)</em></td>
+              <td><em>Random Split</em></td>
+              <td><em>Severe Leakage</em></td>
+              <td><em>99.33%</em></td>
+              <td><em>99.38%</em></td>
+              <td><em>0.993</em></td>
+              <td><em style="color:var(--coral-light);">Memorized vote_* labels</em></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <div class="perf-layout">
@@ -1936,8 +2100,11 @@
   </main>
 
   <footer>
-    NeuralSync.ai Seizure Prediction Showcase — Built with FastAPI, TensorFlow, &amp; HTML5 Canvas.<br>
-    Academic &amp; Professional Portfolio Project. Not a clinically certified medical device.
+    <div style="max-width: 900px; margin: 0 auto; text-align: center; font-size: 0.85rem; color: var(--text-dim); line-height: 1.6;">
+      <p style="color: var(--coral-light); font-weight: 600; margin-bottom: 0.5rem;">⚠️ NOT A MEDICAL DEVICE NOTICE</p>
+      <p>NeuralSync.ai is an academic research and engineering demonstration evaluating neural architectures against empirical baselines. It is NOT cleared by the US FDA, CE marked, or approved by any medical regulatory authority. It must NOT be used for clinical diagnosis, patient monitoring, treatment planning, or life-safety medical alerting.</p>
+      <p style="margin-top: 0.75rem; font-size: 0.78rem; color: var(--text-mute);">Built with FastAPI, PyTorch/TensorFlow, and Vanilla HTML/CSS/JS. Free and open-source.</p>
+    </div>
   </footer>
 
   <div id="toast-container" style="position:fixed; bottom:2rem; right:2rem; z-index:1000; display:flex; flex-direction:column; gap:0.75rem;"></div>

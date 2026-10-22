@@ -12,13 +12,65 @@ const API_BASE = window.API_BASE
   || localStorage.getItem("SEIZURE_API_BASE")
   || (isLocalhost ? "http://localhost:8000" : DEPLOYED_BACKEND_URL);
 
-// State management
-let currentMode = "as_trained";
+// State management - Honest default
+let currentMode = "leakage_corrected";
 let currentIcuState = "calm";
 let currentIcuRisk = 5;
 let sampleRecords = [];
 let activePatient = null;
 let currentFeatureColumns = [];
+
+// Verified local cached metrics fallback (prevents blank UI during Render cold start)
+const CACHED_METRICS = {
+  leakage_corrected: {
+    mstm_accuracy: 0.4219,
+    sbam_accuracy: 0.4237,
+    fusion_accuracy: 0.4219,
+    majority_baseline_accuracy: 0.4219,
+    logistic_regression_accuracy: 0.4219,
+    classes: ["GPD", "GRDA", "LPD", "LRDA", "Other", "Seizure"],
+    classification_report: {
+      "GPD": { precision: 0.0, recall: 0.0, "f1-score": 0.0, support: 205 },
+      "GRDA": { precision: 0.0, recall: 0.0, "f1-score": 0.0, support: 284 },
+      "LPD": { precision: 0.0, recall: 0.0, "f1-score": 0.0, support: 257 },
+      "LRDA": { precision: 0.0, recall: 0.0, "f1-score": 0.0, support: 133 },
+      "Other": { precision: 0.4219, recall: 1.0, "f1-score": 0.5934, support: 940 },
+      "Seizure": { precision: 0.0, recall: 0.0, "f1-score": 0.0, support: 409 },
+      "macro avg": { precision: 0.0703, recall: 0.1667, "f1-score": 0.0989, support: 2228 }
+    },
+    confusion_matrix: [
+      [0, 0, 0, 0, 205, 0],
+      [0, 0, 0, 0, 284, 0],
+      [0, 0, 0, 0, 257, 0],
+      [0, 0, 0, 0, 133, 0],
+      [0, 0, 0, 0, 940, 0],
+      [0, 0, 0, 0, 409, 0]
+    ]
+  },
+  as_trained: {
+    mstm_accuracy: 0.9179,
+    sbam_accuracy: 0.9888,
+    fusion_accuracy: 0.9933,
+    classes: ["GPD", "GRDA", "LPD", "LRDA", "Other", "Seizure"],
+    classification_report: {
+      "GPD": { precision: 0.9903, recall: 0.9951, "f1-score": 0.9927, support: 205 },
+      "GRDA": { precision: 0.9861, recall: 0.9965, "f1-score": 0.9912, support: 284 },
+      "LPD": { precision: 0.9808, recall: 0.9922, "f1-score": 0.9865, support: 257 },
+      "LRDA": { precision: 1.0, recall: 0.9925, "f1-score": 0.9962, support: 133 },
+      "Other": { precision: 0.9979, recall: 0.9915, "f1-score": 0.9947, support: 940 },
+      "Seizure": { precision: 0.9951, recall: 0.9951, "f1-score": 0.9951, support: 409 },
+      "macro avg": { precision: 0.9917, recall: 0.9938, "f1-score": 0.9927, support: 2228 }
+    },
+    confusion_matrix: [
+      [204, 0, 1, 0, 0, 0],
+      [0, 283, 1, 0, 0, 0],
+      [0, 0, 255, 0, 1, 1],
+      [0, 0, 1, 132, 0, 0],
+      [1, 4, 2, 0, 932, 1],
+      [1, 0, 0, 0, 1, 407]
+    ]
+  }
+};
 
 // ============================================================
 // Particle Neural Network Background Animation
@@ -536,23 +588,23 @@ function updateWearableAlert(state) {
   } else if (state === "warning") {
     card.classList.add("alert-warning");
     card.classList.remove("alert-seizure");
-    card.querySelector(".phone-alert-title").textContent = "⚠️ Early Warning Alert";
-    card.querySelector(".phone-alert-body").textContent = `Pre-ictal synchronization detected (Risk: ${currentIcuRisk}%). High likelihood of seizure transition within 10-15 minutes.`;
-    watchStatus.textContent = "Warning (Sync Alert)";
+    card.querySelector(".phone-alert-title").textContent = "⚠️ High Pattern Anomaly";
+    card.querySelector(".phone-alert-body").textContent = `Harmful brain activity pattern detected (Classification risk score: ${currentIcuRisk}%). Snapshot classification based on electrographic features; not predictive forecasting.`;
+    watchStatus.textContent = "Warning (Pattern Alert)";
     watchStatus.style.color = "var(--amber-light)";
     if (phoneEegStatus) {
-      phoneEegStatus.textContent = "PRE-ICTAL WARNING";
+      phoneEegStatus.textContent = "PATTERN ANOMALY";
       phoneEegStatus.style.color = "var(--amber-light)";
     }
   } else if (state === "seizure") {
     card.classList.add("alert-seizure");
     card.classList.remove("alert-warning");
-    card.querySelector(".phone-alert-title").textContent = "🚨 CRITICAL EMERGENCY";
-    card.querySelector(".phone-alert-body").textContent = `ACTIVE SEIZURE DETECTED (Risk: ${currentIcuRisk}%). Immediate medical response & caregiver alert dispatched.`;
-    watchStatus.textContent = "EMERGENCY DISPATCHED";
+    card.querySelector(".phone-alert-title").textContent = "🚨 Electrographic Seizure Pattern";
+    card.querySelector(".phone-alert-body").textContent = `Ictal electrographic pattern classified with high probability (Score: ${currentIcuRisk}%). Research simulation only — not for diagnostic or therapeutic use.`;
+    watchStatus.textContent = "ICTAL CLASSIFICATION";
     watchStatus.style.color = "var(--coral-light)";
     if (phoneEegStatus) {
-      phoneEegStatus.textContent = "CRITICAL SEIZURE";
+      phoneEegStatus.textContent = "SEIZURE DETECTED";
       phoneEegStatus.style.color = "var(--coral-light)";
     }
   }
@@ -826,14 +878,16 @@ function showToast(message, type = "teal") {
 
 function setPipelineMode(mode) {
   currentMode = mode;
-  document.getElementById("btnAsTrained").classList.toggle("active", mode === "as_trained");
-  document.getElementById("btnCorrected").classList.toggle("active", mode === "leakage_corrected");
+  const btnAsTrained = document.getElementById("btnAsTrained");
+  const btnCorrected = document.getElementById("btnCorrected");
+  if (btnAsTrained) btnAsTrained.classList.toggle("active", mode === "as_trained");
+  if (btnCorrected) btnCorrected.classList.toggle("active", mode === "leakage_corrected");
   
   loadModelInfo();
   generateFeatureSliders();
   
-  const label = mode === "as_trained" ? "As Trained Mode (98.8% Acc)" : "Leakage-Corrected Mode";
-  showToast(`Active Pipeline: ${label}`, mode === "as_trained" ? "teal" : "amber");
+  const label = mode === "as_trained" ? "Leakage Demo (98.8% Artifact)" : "Leakage-Corrected Mode (Honest Default)";
+  showToast(`Active Pipeline: ${label}`, mode === "as_trained" ? "coral" : "teal");
   
   const target = document.getElementById("simulators");
   if (target) {
@@ -1056,22 +1110,37 @@ async function triggerPredict() {
 // ============================================================
 // Performance Evaluation: Metrics and Confusion Matrix
 // ============================================================
-async function loadModelInfo() {
-  try {
-    const res = await fetch(`${API_BASE}/model-info?mode=${currentMode}`);
-    if (!res.ok) throw new Error("Could not load model info");
-    const data = await res.json();
-    
-    document.getElementById("txtMstmAcc").textContent = `${(data.mstm_accuracy * 100).toFixed(1)}%`;
-    document.getElementById("fillMstmAcc").style.width = `${(data.mstm_accuracy * 100).toFixed(1)}%`;
-    
-    document.getElementById("txtSbamAcc").textContent = `${(data.sbam_accuracy * 100).toFixed(1)}%`;
-    document.getElementById("fillSbamAcc").style.width = `${(data.sbam_accuracy * 100).toFixed(1)}%`;
-    
-    document.getElementById("txtFusionAcc").textContent = `${(data.fusion_accuracy * 100).toFixed(1)}%`;
-    document.getElementById("fillFusionAcc").style.width = `${(data.fusion_accuracy * 100).toFixed(1)}%`;
-    
-    const tableBody = document.getElementById("metricsTable").querySelector("tbody");
+function renderMetricsData(data) {
+  if (!data) return;
+  
+  const mstmEl = document.getElementById("txtMstmAcc");
+  const fillMstmEl = document.getElementById("fillMstmAcc");
+  if (mstmEl && fillMstmEl) {
+    mstmEl.textContent = `${(data.mstm_accuracy * 100).toFixed(1)}%`;
+    fillMstmEl.style.width = `${(data.mstm_accuracy * 100).toFixed(1)}%`;
+  }
+  
+  const sbamEl = document.getElementById("txtSbamAcc");
+  const fillSbamEl = document.getElementById("fillSbamAcc");
+  if (sbamEl && fillSbamEl) {
+    sbamEl.textContent = `${(data.sbam_accuracy * 100).toFixed(1)}%`;
+    fillSbamEl.style.width = `${(data.sbam_accuracy * 100).toFixed(1)}%`;
+  }
+  
+  const fusionEl = document.getElementById("txtFusionAcc");
+  const fillFusionEl = document.getElementById("fillFusionAcc");
+  if (fusionEl && fillFusionEl) {
+    fusionEl.textContent = `${(data.fusion_accuracy * 100).toFixed(1)}%`;
+    fillFusionEl.style.width = `${(data.fusion_accuracy * 100).toFixed(1)}%`;
+  }
+  
+  const cardFusionEl = document.getElementById("txtFusionCardAcc");
+  if (cardFusionEl) {
+    cardFusionEl.textContent = `${(data.fusion_accuracy * 100).toFixed(1)}%`;
+  }
+  
+  const tableBody = document.getElementById("metricsTable")?.querySelector("tbody");
+  if (tableBody && data.classification_report && data.classes) {
     tableBody.innerHTML = "";
     
     const classes = data.classes;
@@ -1080,9 +1149,9 @@ async function loadModelInfo() {
       const row = document.createElement("tr");
       row.innerHTML = `
         <td class="class-name">${cls}</td>
-        <td>${clsMetrics.precision.toFixed(3)}</td>
-        <td>${clsMetrics.recall.toFixed(3)}</td>
-        <td>${clsMetrics["f1-score"].toFixed(3)}</td>
+        <td>${(clsMetrics.precision || 0).toFixed(3)}</td>
+        <td>${(clsMetrics.recall || 0).toFixed(3)}</td>
+        <td>${(clsMetrics["f1-score"] || 0).toFixed(3)}</td>
       `;
       tableBody.appendChild(row);
     });
@@ -1093,14 +1162,17 @@ async function loadModelInfo() {
     avgRow.style.borderTop = "2px solid var(--border-active)";
     avgRow.innerHTML = `
       <td class="class-name">Macro Average</td>
-      <td>${macroAvg.precision.toFixed(3)}</td>
-      <td>${macroAvg.recall.toFixed(3)}</td>
-      <td>${macroAvg["f1-score"].toFixed(3)}</td>
+      <td>${(macroAvg.precision || 0).toFixed(3)}</td>
+      <td>${(macroAvg.recall || 0).toFixed(3)}</td>
+      <td>${(macroAvg["f1-score"] || 0).toFixed(3)}</td>
     `;
     tableBody.appendChild(avgRow);
-    
-    const cmGrid = document.getElementById("cmGridContainer");
+  }
+  
+  const cmGrid = document.getElementById("cmGridContainer");
+  if (cmGrid && data.classes && data.confusion_matrix) {
     cmGrid.innerHTML = "";
+    const classes = data.classes;
     
     const headerRow = document.createElement("div");
     headerRow.className = "cm-row";
@@ -1136,9 +1208,42 @@ async function loadModelInfo() {
       });
       cmGrid.appendChild(row);
     });
+  }
+}
+
+async function loadModelInfo() {
+  const coldStartBanner = document.getElementById("cold-start-banner");
+  
+  // 1. Immediately render cached metrics so page is never blank
+  if (CACHED_METRICS[currentMode]) {
+    renderMetricsData(CACHED_METRICS[currentMode]);
+  }
+  
+  // 2. Set timeout to show cold start banner if backend takes > 1200ms
+  let isFetched = false;
+  const coldStartTimer = setTimeout(() => {
+    if (!isFetched && coldStartBanner) {
+      coldStartBanner.style.display = "block";
+    }
+  }, 1200);
+
+  try {
+    const res = await fetch(`${API_BASE}/model-info?mode=${currentMode}`, { signal: AbortSignal.timeout(15000) });
+    isFetched = true;
+    clearTimeout(coldStartTimer);
+    if (coldStartBanner) coldStartBanner.style.display = "none";
     
+    if (!res.ok) throw new Error("Could not load model info from backend");
+    const data = await res.json();
+    renderMetricsData(data);
   } catch (err) {
-    console.error(err);
+    isFetched = true;
+    clearTimeout(coldStartTimer);
+    console.warn("Backend unavailable or cold-starting. Fallback cache is active.", err);
+    // Keep showing cold start banner if on cloud
+    if (!isLocalhost && coldStartBanner) {
+      coldStartBanner.style.display = "block";
+    }
   }
 }
 

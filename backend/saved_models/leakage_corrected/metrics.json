@@ -112,5 +112,171 @@
     ]
   ],
   "num_train": 8910,
-  "num_test": 2228
+  "num_test": 2228,
+  "majority_baseline_accuracy": 0.42190305206463197,
+  "majority_baseline_macro_f1": 0.0989057239057239,
+  "logistic_regression_accuracy": 0.42190305206463197,
+  "logistic_regression_macro_f1": 0.0989057239057239,
+  "patient_grouped": {
+    "majority_accuracy": 0.3731481481481482,
+    "majority_balanced_accuracy": 0.16666666666666666,
+    "majority_macro_f1": 0.09058215329287479,
+    "logistic_regression_accuracy": 0.3731481481481482,
+    "logistic_regression_balanced_accuracy": 0.16666666666666666,
+    "logistic_regression_macro_f1": 0.09058215329287479,
+    "random_forest_accuracy": 0.36018518518518516,
+    "random_forest_balanced_accuracy": 0.16353848786790584,
+    "random_forest_macro_f1": 0.09822898487812283,
+    "num_test_patients": 390,
+    "confusion_matrix_majority": [
+      [
+        0,
+        0,
+        0,
+        0,
+        224,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        276,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        300,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        134,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        806,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        420,
+        0
+      ]
+    ],
+    "confusion_matrix_lr": [
+      [
+        0,
+        0,
+        0,
+        0,
+        224,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        276,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        300,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        134,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        806,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        420,
+        0
+      ]
+    ],
+    "confusion_matrix_rf": [
+      [
+        1,
+        10,
+        1,
+        0,
+        199,
+        13
+      ],
+      [
+        0,
+        2,
+        0,
+        0,
+        260,
+        14
+      ],
+      [
+        0,
+        13,
+        0,
+        0,
+        284,
+        3
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        131,
+        2
+      ],
+      [
+        1,
+        20,
+        0,
+        0,
+        768,
+        17
+      ],
+      [
+        0,
+        12,
+        0,
+        0,
+        401,
+        7
+      ]
+    ]
+  }
 }

@@ -1,0 +1,23 @@
+% Auto-generated Table for Paper Submission
+\begin{table}[t]
+\centering
+\caption{Empirical evaluation of baselines and neural architectures on the HMS Brain Activity dataset under random vs. patient-grouped validation protocols.}
+\label{tab:seizure_classification_results}
+\begin{tabular}{llcccc}
+\hline
+\textbf{Model} & \textbf{Validation Protocol} & \textbf{Patient Overlap} & \textbf{Accuracy (\%)} & \textbf{Bal. Acc. (\%)} & \textbf{Macro F1 (\%)} \\
+\hline
+Majority Baseline & Random Split (80/20) & 879 Patients & 42.19 & 16.67 & 9.89 \\
+Logistic Regression & Random Split (80/20) & 879 Patients & 42.19 & 16.67 & 9.89 \\
+MSTM Branch & Random Split (80/20) & 879 Patients & 42.19 & 16.67 & 9.89 \\
+SBAM Branch & Random Split (80/20) & 879 Patients & 42.37 & 16.67 & 9.89 \\
+STFM Fusion & Random Split (80/20) & 879 Patients & 42.19 & 16.67 & 9.89 \\
+\hline
+\textbf{Majority Baseline} & \textbf{Patient-Grouped} & \textbf{0 (390 Unseen)} & \textbf{37.31} & \textbf{16.67} & \textbf{9.06} \\
+\textbf{Logistic Regression} & \textbf{Patient-Grouped} & \textbf{0 (390 Unseen)} & \textbf{37.31} & \textbf{16.67} & \textbf{9.06} \\
+\textbf{Random Forest} & \textbf{Patient-Grouped} & \textbf{0 (390 Unseen)} & \textbf{36.02} & \textbf{16.35} & \textbf{9.82} \\
+\hline
+\textit{Leaking Model (Vote Features)} & \textit{Random Split} & \textit{Contaminated} & \textit{99.33} & \textit{99.38} & \textit{99.27} \\
+\hline
+\end{tabular}
+\end{table}

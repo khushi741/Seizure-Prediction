@@ -12,8 +12,10 @@ from typing import Dict, List, Optional
 # pyrefly: ignore [missing-import]
 import numpy as np
 import pandas as pd
-import tensorflow as tf
-# pyrefly: ignore [missing-import]
+try:
+    import tensorflow as tf
+except ImportError:
+    tf = None
 from fastapi import FastAPI, HTTPException
 # pyrefly: ignore [missing-import]
 from fastapi.middleware.cors import CORSMiddleware
@@ -48,7 +50,7 @@ def on_startup():
 # Lazy-Loaded Model Pipelines (Keeps Startup RAM < 60MB on 512MB Render tier)
 # ----------------------------------------------------------------------
 pipelines = {}
-available_modes = ["as_trained", "leakage_corrected"]
+available_modes = ["leakage_corrected", "as_trained"]
 
 
 def get_pipeline(mode: str) -> Dict:
@@ -56,6 +58,12 @@ def get_pipeline(mode: str) -> Dict:
     Loads Keras model artifacts on-demand rather than at startup.
     Ensures container never exceeds Render's 512MB memory limit.
     """
+    if tf is None:
+        raise HTTPException(
+            status_code=503,
+            detail="TensorFlow is not installed in the local environment (e.g. Windows Python 3.14). Model inference runs via Docker or Linux container."
+        )
+
     if mode not in available_modes:
         raise HTTPException(
             status_code=400,
@@ -129,12 +137,14 @@ if samples_path.exists():
 
 
 class PredictRequest(BaseModel):
-    mode: str = "as_trained"
+    mode: str = "leakage_corrected"
     features: Dict[str, float]
 
 
 def compute_gradcam_1d(grad_model, sbm_tensor, mstm_tensor, class_index: int) -> List[float]:
     """Computes 1D Grad-CAM over the conv1d_sbm layer in the Fusion model."""
+    if tf is None:
+        return [0.0] * 128
     with tf.GradientTape() as tape:
         conv_outputs, predictions = grad_model([sbm_tensor, mstm_tensor], training=False)
         loss = predictions[:, class_index]
@@ -153,6 +163,8 @@ def compute_gradcam_1d(grad_model, sbm_tensor, mstm_tensor, class_index: int) ->
 
 def compute_feature_gradients(sbm_feat_extractor, mstm_feat_extractor, fusion_model, x_tensor, class_index: int) -> List[float]:
     """Computes direct input gradients of target class w.r.t scaled input features."""
+    if tf is None:
+        return [0.0] * 8
     with tf.GradientTape() as tape:
         tape.watch(x_tensor)
         sbm_feats = sbm_feat_extractor(x_tensor, training=False)
@@ -173,7 +185,8 @@ def health():
     return {
         "status": "ok",
         "message": "Seizure Prediction API is healthy",
-        "available_modes": available_modes
+        "available_modes": available_modes,
+        "default_mode": "leakage_corrected"
     }
 
 
@@ -189,8 +202,18 @@ def get_samples():
     return SAMPLE_RECORDS
 
 
+@app.get("/evaluation-summary")
+def get_evaluation_summary():
+    """Returns honest multi-split evaluation with baselines and patient isolation."""
+    summary_path = MODELS_DIR / "honest_evaluation.json"
+    if summary_path.exists():
+        with open(summary_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    raise HTTPException(status_code=404, detail="honest_evaluation.json not found.")
+
+
 @app.get("/model-info")
-def model_info(mode: str = "as_trained"):
+def model_info(mode: str = "leakage_corrected"):
     if mode not in available_modes:
         raise HTTPException(status_code=400, detail=f"Invalid mode. Available: {available_modes}")
 
