@@ -1,0 +1,18 @@
+{
+  "model": "STFM (SBAM + MSTM Fusion)",
+  "input_shape": [
+    1,
+    18,
+    640
+  ],
+  "window_duration_seconds": 5.0,
+  "fp32_size_kb": 851.583984375,
+  "onnx_size_kb": 881.26953125,
+  "int8_size_kb": 308.9453125,
+  "compression_percent": 63.72109877961795,
+  "fp32_latency_ms": 1.7937339993659407,
+  "int8_latency_ms": 2.199908000184223,
+  "real_time_factor": 0.00043998160003684463,
+  "numerical_abs_diff": 0.0001024007797241211,
+  "edge_ready": true
+}

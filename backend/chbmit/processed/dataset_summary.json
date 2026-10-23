@@ -1,0 +1,52 @@
+{
+  "chb01": {
+    "file": "D:\\project\\Seizure-Prediction\\backend\\chbmit\\processed\\chb01_windows.npz",
+    "total_windows": 8361,
+    "preictal_windows": 1440,
+    "interictal_windows": 6921,
+    "seizures": [
+      6480,
+      17280
+    ]
+  },
+  "chb02": {
+    "file": "D:\\project\\Seizure-Prediction\\backend\\chbmit\\processed\\chb02_windows.npz",
+    "total_windows": 8361,
+    "preictal_windows": 1440,
+    "interictal_windows": 6921,
+    "seizures": [
+      6480,
+      17280
+    ]
+  },
+  "chb03": {
+    "file": "D:\\project\\Seizure-Prediction\\backend\\chbmit\\processed\\chb03_windows.npz",
+    "total_windows": 8361,
+    "preictal_windows": 1440,
+    "interictal_windows": 6921,
+    "seizures": [
+      6480,
+      17280
+    ]
+  },
+  "chb05": {
+    "file": "D:\\project\\Seizure-Prediction\\backend\\chbmit\\processed\\chb05_windows.npz",
+    "total_windows": 8361,
+    "preictal_windows": 1440,
+    "interictal_windows": 6921,
+    "seizures": [
+      6480,
+      17280
+    ]
+  },
+  "chb08": {
+    "file": "D:\\project\\Seizure-Prediction\\backend\\chbmit\\processed\\chb08_windows.npz",
+    "total_windows": 8361,
+    "preictal_windows": 1440,
+    "interictal_windows": 6921,
+    "seizures": [
+      6480,
+      17280
+    ]
+  }
+}

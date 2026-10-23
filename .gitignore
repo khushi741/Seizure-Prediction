@@ -27,5 +27,11 @@ venv.bak/
 *.suo
 *.ntvs*
 *.njsproj
-*.sln
 *.sw?
+
+# CHB-MIT Large Processed Arrays (>100MB)
+backend/chbmit/processed/*.npz
+backend/chbmit/data/
+backend/saved_models/edge/*.onnx
+backend/saved_models/edge/*.pt
+

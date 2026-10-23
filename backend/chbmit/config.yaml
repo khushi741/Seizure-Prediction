@@ -1,0 +1,63 @@
+# ==============================================================
+# CHB-MIT Scalp EEG Seizure Prediction Configuration
+# Tasks 8 - 12: Real Continuous EEG Prediction Protocol
+# ==============================================================
+
+dataset:
+  name: "CHB-MIT Scalp EEG Database"
+  source: "PhysioNet (Boston Children's Hospital / MIT)"
+  sampling_rate: 256
+  target_sampling_rate: 128
+  patients:
+    - "chb01"
+    - "chb02"
+    - "chb03"
+    - "chb05"
+    - "chb08"
+  channels:
+    - "FP1-F7"
+    - "F7-T7"
+    - "T7-P7"
+    - "P7-O1"
+    - "FP1-F3"
+    - "F3-C3"
+    - "C3-P3"
+    - "P3-O1"
+    - "FP2-F4"
+    - "F4-C4"
+    - "C4-P4"
+    - "P4-O2"
+    - "FP2-F8"
+    - "F8-T8"
+    - "T8-P8"
+    - "P8-O2"
+    - "FZ-CZ"
+    - "CZ-PZ"
+
+labeling:
+  preictal_window_minutes: 30           # Pre-onset anomaly window
+  seizure_prediction_horizon_minutes: 5 # SPH (intervention window prior to onset)
+  interictal_buffer_hours: 4            # Exclude data within 4h of any seizure from interictal
+  window_length_seconds: 5              # Window length for spatial-temporal tensors
+  window_overlap_percent: 50            # 50% overlap
+
+preprocessing:
+  bandpass_low: 0.5
+  bandpass_high: 45.0
+  notch_freq: 60.0
+  frequency_bands:
+    delta: [0.5, 4.0]
+    theta: [4.0, 8.0]
+    alpha: [8.0, 13.0]
+    beta: [13.0, 30.0]
+    gamma: [30.0, 45.0]
+
+alarm:
+  smoothing_window_steps: 6             # Rolling probability smoothing (~15s)
+  threshold: 0.5                        # Operating threshold (tuned on val only)
+  refractory_period_minutes: 15         # No repeated alarms within 15 min
+
+evaluation:
+  patient_specific_test_ratio: 0.25    # Chronological: first 75% train/val, last 25% test
+  lopo: true                            # Leave-One-Patient-Out cross validation
+  random_seed: 42

@@ -1,0 +1,309 @@
+{
+  "dataset": "CHB-MIT Scalp EEG Database (PhysioNet)",
+  "patients": [
+    "chb01",
+    "chb02",
+    "chb03",
+    "chb05",
+    "chb08"
+  ],
+  "patient_specific_evaluation": {
+    "per_patient": {
+      "chb01": {
+        "test_duration_hours": 2.1284722222222223,
+        "test_seizures": 1,
+        "majority_baseline": {
+          "sensitivity": 0.0,
+          "false_alarms_per_hour": 0.0,
+          "auc": 0.5
+        },
+        "logistic_regression": {
+          "sensitivity": 1.0,
+          "false_alarms_per_hour": 0.0,
+          "auc": 1.0
+        },
+        "random_forest": {
+          "sensitivity": 1.0,
+          "false_alarms_per_hour": 0.0,
+          "auc": 1.0
+        },
+        "plain_1d_cnn": {
+          "sensitivity": 1.0,
+          "false_alarms_per_hour": 0.0,
+          "auc": 1.0
+        },
+        "stfm_fusion": {
+          "sensitivity": 1.0,
+          "false_alarms_per_hour": 0.6524694154961487,
+          "auc": 1.0,
+          "time_in_warning_percent": 70.47308319738988,
+          "poisson_chance": 0.27836420595862643,
+          "p_value": 0.27836420595862643,
+          "statistically_better_than_chance": false,
+          "operating_threshold": 0.3,
+          "temperature": 1.2,
+          "brier_score": 0.00030460237758234143,
+          "low_confidence_rate": 0.1,
+          "sanity_check_correlation": -0.06553246825933456,
+          "passed_sanity_check": true
+        }
+      },
+      "chb02": {
+        "test_duration_hours": 2.1284722222222223,
+        "test_seizures": 1,
+        "majority_baseline": {
+          "sensitivity": 0.0,
+          "false_alarms_per_hour": 0.0,
+          "auc": 0.5
+        },
+        "logistic_regression": {
+          "sensitivity": 1.0,
+          "false_alarms_per_hour": 0.0,
+          "auc": 1.0
+        },
+        "random_forest": {
+          "sensitivity": 1.0,
+          "false_alarms_per_hour": 0.0,
+          "auc": 0.9999990560338318
+        },
+        "plain_1d_cnn": {
+          "sensitivity": 1.0,
+          "false_alarms_per_hour": 0.0,
+          "auc": 1.0
+        },
+        "stfm_fusion": {
+          "sensitivity": 1.0,
+          "false_alarms_per_hour": 0.6524694154961487,
+          "auc": 1.0,
+          "time_in_warning_percent": 70.47308319738988,
+          "poisson_chance": 0.27836420595862643,
+          "p_value": 0.27836420595862643,
+          "statistically_better_than_chance": false,
+          "operating_threshold": 0.3,
+          "temperature": 1.2,
+          "brier_score": 0.00042825107811950147,
+          "low_confidence_rate": 0.02,
+          "sanity_check_correlation": -0.33807042241096497,
+          "passed_sanity_check": true
+        }
+      },
+      "chb03": {
+        "test_duration_hours": 2.1284722222222223,
+        "test_seizures": 1,
+        "majority_baseline": {
+          "sensitivity": 0.0,
+          "false_alarms_per_hour": 0.0,
+          "auc": 0.5
+        },
+        "logistic_regression": {
+          "sensitivity": 1.0,
+          "false_alarms_per_hour": 0.0,
+          "auc": 1.0
+        },
+        "random_forest": {
+          "sensitivity": 1.0,
+          "false_alarms_per_hour": 0.0,
+          "auc": 1.0
+        },
+        "plain_1d_cnn": {
+          "sensitivity": 1.0,
+          "false_alarms_per_hour": 0.0,
+          "auc": 1.0
+        },
+        "stfm_fusion": {
+          "sensitivity": 1.0,
+          "false_alarms_per_hour": 0.6524694154961487,
+          "auc": 1.0,
+          "time_in_warning_percent": 70.47308319738988,
+          "poisson_chance": 0.27836420595862643,
+          "p_value": 0.27836420595862643,
+          "statistically_better_than_chance": false,
+          "operating_threshold": 0.3,
+          "temperature": 1.2,
+          "brier_score": 0.0002557224652264267,
+          "low_confidence_rate": 0.02,
+          "sanity_check_correlation": 0.24111931025981903,
+          "passed_sanity_check": true
+        }
+      },
+      "chb05": {
+        "test_duration_hours": 2.1284722222222223,
+        "test_seizures": 1,
+        "majority_baseline": {
+          "sensitivity": 0.0,
+          "false_alarms_per_hour": 0.0,
+          "auc": 0.5
+        },
+        "logistic_regression": {
+          "sensitivity": 1.0,
+          "false_alarms_per_hour": 0.0,
+          "auc": 1.0
+        },
+        "random_forest": {
+          "sensitivity": 1.0,
+          "false_alarms_per_hour": 0.0,
+          "auc": 1.0
+        },
+        "plain_1d_cnn": {
+          "sensitivity": 1.0,
+          "false_alarms_per_hour": 0.0,
+          "auc": 1.0
+        },
+        "stfm_fusion": {
+          "sensitivity": 1.0,
+          "false_alarms_per_hour": 0.6524694154961487,
+          "auc": 1.0,
+          "time_in_warning_percent": 70.47308319738988,
+          "poisson_chance": 0.27836420595862643,
+          "p_value": 0.27836420595862643,
+          "statistically_better_than_chance": false,
+          "operating_threshold": 0.3,
+          "temperature": 1.2,
+          "brier_score": 0.00013890862464904785,
+          "low_confidence_rate": 0.16,
+          "sanity_check_correlation": -0.0768570825457573,
+          "passed_sanity_check": true
+        }
+      },
+      "chb08": {
+        "test_duration_hours": 2.1284722222222223,
+        "test_seizures": 1,
+        "majority_baseline": {
+          "sensitivity": 0.0,
+          "false_alarms_per_hour": 0.0,
+          "auc": 0.5
+        },
+        "logistic_regression": {
+          "sensitivity": 1.0,
+          "false_alarms_per_hour": 0.0,
+          "auc": 1.0
+        },
+        "random_forest": {
+          "sensitivity": 1.0,
+          "false_alarms_per_hour": 0.0,
+          "auc": 0.9999987413784422
+        },
+        "plain_1d_cnn": {
+          "sensitivity": 1.0,
+          "false_alarms_per_hour": 0.0,
+          "auc": 1.0
+        },
+        "stfm_fusion": {
+          "sensitivity": 1.0,
+          "false_alarms_per_hour": 0.6524694154961487,
+          "auc": 1.0,
+          "time_in_warning_percent": 70.47308319738988,
+          "poisson_chance": 0.27836420595862643,
+          "p_value": 0.27836420595862643,
+          "statistically_better_than_chance": false,
+          "operating_threshold": 0.3,
+          "temperature": 1.2,
+          "brier_score": 0.00020928910817019641,
+          "low_confidence_rate": 0.06,
+          "sanity_check_correlation": -0.23627503216266632,
+          "passed_sanity_check": true
+        }
+      }
+    },
+    "summary": {
+      "mean_sensitivity": 1.0,
+      "std_sensitivity": 0.0,
+      "mean_false_alarms_per_hour": 0.6524694154961487,
+      "std_false_alarms_per_hour": 0.0,
+      "mean_auc": 1.0,
+      "std_auc": 0.0
+    }
+  },
+  "ablation_study": {
+    "MSTM_Full": {
+      "auc": 1.0,
+      "brier_score": 0.0005775034078396857
+    },
+    "MSTM_NoDilation": {
+      "auc": 1.0,
+      "brier_score": 0.00042212940752506256
+    },
+    "MSTM_SingleKernel": {
+      "auc": 1.0,
+      "brier_score": 0.0007001878693699837
+    },
+    "SBAM_Full": {
+      "auc": 1.0,
+      "brier_score": 0.0011883651604875922
+    },
+    "SBAM_NoAttention": {
+      "auc": 1.0,
+      "brier_score": 0.0005615573027171195
+    },
+    "SBAM_SingleHead": {
+      "auc": 1.0,
+      "brier_score": 0.0003243794199079275
+    }
+  },
+  "leave_one_patient_out": {
+    "per_patient": {
+      "chb01": {
+        "held_out_patient": "chb01",
+        "auc": 1.0
+      },
+      "chb02": {
+        "held_out_patient": "chb02",
+        "auc": 1.0
+      },
+      "chb03": {
+        "held_out_patient": "chb03",
+        "auc": 1.0
+      },
+      "chb05": {
+        "held_out_patient": "chb05",
+        "auc": 0.9999999999999999
+      },
+      "chb08": {
+        "held_out_patient": "chb08",
+        "auc": 1.0
+      }
+    },
+    "mean_auc": 1.0,
+    "std_auc": 4.965068306494546e-17
+  },
+  "channels": [
+    "FP1-F7",
+    "F7-T7",
+    "T7-P7",
+    "P7-O1",
+    "FP1-F3",
+    "F3-C3",
+    "C3-P3",
+    "P3-O1",
+    "FP2-F4",
+    "F4-C4",
+    "C4-P4",
+    "P4-O2",
+    "FP2-F8",
+    "F8-T8",
+    "T8-P8",
+    "P8-O2",
+    "FZ-CZ",
+    "CZ-PZ"
+  ],
+  "sample_scalp_attention": [
+    0.013191008940339088,
+    0.153191938996315,
+    0.038386471569538116,
+    0.08621865510940552,
+    0.013888835906982422,
+    0.035902246832847595,
+    0.0652952641248703,
+    0.018030716106295586,
+    0.04931502044200897,
+    0.01401856541633606,
+    0.05544992908835411,
+    0.1206950843334198,
+    0.05196921527385712,
+    0.018050620332360268,
+    0.02890668995678425,
+    0.11559943109750748,
+    0.0013817375293001533,
+    0.1205086037516594
+  ]
+}

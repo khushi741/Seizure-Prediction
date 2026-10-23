@@ -1,0 +1,32 @@
+{
+  "chb01": {
+    "patient_id": "chb01",
+    "frames": 120,
+    "seizure_timestamp_sec": 6480.0,
+    "size_kb": 1383.2
+  },
+  "chb02": {
+    "patient_id": "chb02",
+    "frames": 120,
+    "seizure_timestamp_sec": 6480.0,
+    "size_kb": 1383.5
+  },
+  "chb03": {
+    "patient_id": "chb03",
+    "frames": 120,
+    "seizure_timestamp_sec": 6480.0,
+    "size_kb": 1383.7
+  },
+  "chb05": {
+    "patient_id": "chb05",
+    "frames": 120,
+    "seizure_timestamp_sec": 6480.0,
+    "size_kb": 1383.8
+  },
+  "chb08": {
+    "patient_id": "chb08",
+    "frames": 120,
+    "seizure_timestamp_sec": 6480.0,
+    "size_kb": 1383.9
+  }
+}

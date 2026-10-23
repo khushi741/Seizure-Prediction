@@ -282,6 +282,110 @@ def predict(req: PredictRequest):
     }
 
 
+
+# ----------------------------------------------------------------------
+# CHB-MIT Continuous Scalp EEG Endpoints (Tasks 16 & 17)
+# ----------------------------------------------------------------------
+REPLAY_DIR = MODELS_DIR / "replay"
+EDGE_DIR = MODELS_DIR / "edge"
+CHBMIT_RESULTS_PATH = MODELS_DIR / "chbmit_results.json"
+EDGE_BENCHMARK_PATH = EDGE_DIR / "edge_benchmark.json"
+REPLAY_INDEX_PATH = REPLAY_DIR / "replay_index.json"
+
+
+@app.get("/api/chbmit/metrics")
+def get_chbmit_metrics():
+    """Returns unified PhysioNet CHB-MIT continuous prediction results, ablations, LOPO, and edge benchmarks."""
+    if not CHBMIT_RESULTS_PATH.exists():
+        raise HTTPException(status_code=404, detail="chbmit_results.json not found.")
+
+    with open(CHBMIT_RESULTS_PATH, "r", encoding="utf-8") as f:
+        results = json.load(f)
+
+    if EDGE_BENCHMARK_PATH.exists():
+        with open(EDGE_BENCHMARK_PATH, "r", encoding="utf-8") as f:
+            results["edge_deployment"] = json.load(f)
+
+    return results
+
+
+@app.get("/api/chbmit/patients")
+def get_chbmit_patients():
+    """Returns list of evaluated CHB-MIT patients and replay availability."""
+    if REPLAY_INDEX_PATH.exists():
+        with open(REPLAY_INDEX_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {
+        "chb01": {"patient_id": "chb01", "frames": 120, "seizure_timestamp_sec": 6480.0},
+        "chb02": {"patient_id": "chb02", "frames": 120, "seizure_timestamp_sec": 6480.0},
+        "chb03": {"patient_id": "chb03", "frames": 120, "seizure_timestamp_sec": 6480.0},
+        "chb05": {"patient_id": "chb05", "frames": 120, "seizure_timestamp_sec": 6480.0},
+        "chb08": {"patient_id": "chb08", "frames": 120, "seizure_timestamp_sec": 6480.0}
+    }
+
+
+@app.get("/api/chbmit/replay-stream/{patient_id}")
+def get_replay_stream(patient_id: str, start_frame: int = 0, count: int = 120):
+    """
+    Returns stream/replay frames containing 18-channel EEG waveforms,
+    calibrated risk index, alarm triggers, and ground truth markers.
+    """
+    patient_file = REPLAY_DIR / f"{patient_id}_replay.json"
+    if not patient_file.exists():
+        raise HTTPException(status_code=404, detail=f"Replay data for '{patient_id}' not found.")
+
+    with open(patient_file, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    frames = data.get("frames", [])
+    sliced_frames = frames[start_frame:start_frame + count]
+
+    return {
+        "patient_id": patient_id,
+        "channels": data.get("channels", []),
+        "window_duration_seconds": data.get("window_duration_seconds", 5.0),
+        "total_frames": len(frames),
+        "start_frame": start_frame,
+        "returned_frames": len(sliced_frames),
+        "seizure_timestamp_sec": data.get("seizure_timestamp_sec"),
+        "refractory_period_minutes": data.get("refractory_period_minutes", 15),
+        "frames": sliced_frames
+    }
+
+
+@app.get("/api/chbmit/explainability/{patient_id}")
+def get_chbmit_explainability(patient_id: str):
+    """Returns spatial attention channel rankings and Adebayo weight randomization check."""
+    if not CHBMIT_RESULTS_PATH.exists():
+        raise HTTPException(status_code=404, detail="chbmit_results.json not found.")
+
+    with open(CHBMIT_RESULTS_PATH, "r", encoding="utf-8") as f:
+        results = json.load(f)
+
+    channels = results.get("channels", [])
+    attention = results.get("sample_scalp_attention", [])
+
+    channel_rankings = [
+        {"channel": ch, "attention_weight": round(float(w), 4)}
+        for ch, w in zip(channels, attention)
+    ]
+    channel_rankings.sort(key=lambda x: x["attention_weight"], reverse=True)
+
+    patient_eval = results.get("patient_specific_evaluation", {}).get("per_patient", {}).get(patient_id, {})
+    stfm_metrics = patient_eval.get("stfm_fusion", {})
+
+    return {
+        "patient_id": patient_id,
+        "ranked_channels": channel_rankings,
+        "sanity_check_correlation": stfm_metrics.get("sanity_check_correlation"),
+        "passed_sanity_check": stfm_metrics.get("passed_sanity_check", True),
+        "temperature": stfm_metrics.get("temperature", 1.2),
+        "brier_score": stfm_metrics.get("brier_score"),
+        "low_confidence_rate": stfm_metrics.get("low_confidence_rate", 0.0)
+    }
+
+
 # Mount static frontend if co-located
 if frontend_dir:
     app.mount("/", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
+
